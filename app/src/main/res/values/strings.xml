@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Samsung Cam 2.0</string>
+    <string name="follow">Follow</string>
+    <string name="auto_zoom">Auto-Zoom</string>
+    <string name="horizon">Horizont</string>
+    <string name="eraser">KI-Radierer</string>
+    <string name="erase_go">Entfernen</string>
+    <string name="erase_clear">Zurücksetzen</string>
+    <string name="erase_save">Speichern</string>
+    <string name="erase_hint">Mit dem Finger über das Objekt malen, dann „Entfernen“.</string>
+    <string name="no_permission">Ohne Kamera-Berechtigung geht es leider nicht.</string>
+    <string name="saved">Gespeichert</string>
+    <string name="save_failed">Speichern fehlgeschlagen</string>
+    <string name="no_photo">Mach zuerst ein Foto.</string>
+</resources>
