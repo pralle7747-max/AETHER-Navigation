@@ -20,6 +20,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import java.util.concurrent.Executors
 import kotlin.math.max
 import kotlin.math.min
@@ -36,6 +39,9 @@ class EditorActivity : AppCompatActivity() {
     private lateinit var hint: TextView
     private lateinit var action: Button
     private lateinit var colors: LinearLayout
+    private lateinit var selectRow: LinearLayout
+    private lateinit var selectBtn: Button
+    private lateinit var clearBtn: Button
     private val worker = Executors.newSingleThreadExecutor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +74,19 @@ class EditorActivity : AppCompatActivity() {
                 }
         }
 
+        selectBtn = Button(this).apply {
+            text = "Auswahl: Smart (Tippen)"
+            setOnClickListener {
+                view.smartMode = !view.smartMode
+                text = if (view.smartMode) "Auswahl: Smart (Tippen)" else "Auswahl: Pinsel"
+            }
+        }
+        clearBtn = Button(this).apply { text = "Auswahl leeren"; setOnClickListener { view.clearSelection() } }
+        selectRow = LinearLayout(this).apply {
+            addView(selectBtn, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(clearBtn, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+
         val undo = Button(this).apply { text = "Zurück"; setOnClickListener { view.undo() } }
         val save = Button(this).apply { text = "Speichern"; setOnClickListener { save() } }
         action.setOnClickListener { runAction() }
@@ -78,7 +97,7 @@ class EditorActivity : AppCompatActivity() {
         setContentView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.BLACK)
-            addView(tools); addView(hint); addView(colors)
+            addView(tools); addView(hint); addView(selectRow); addView(colors)
             addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
             addView(bar)
         })
@@ -91,10 +110,11 @@ class EditorActivity : AppCompatActivity() {
         view.commitFloating()
         view.tool = t
         colors.visibility = if (t == EditorView.Tool.DRAW) View.VISIBLE else View.GONE
+        selectRow.visibility = if (t == EditorView.Tool.DRAW) View.GONE else View.VISIBLE
         action.isEnabled = t != EditorView.Tool.DRAW
         when (t) {
-            EditorView.Tool.ERASE -> { action.text = "Entfernen"; hint.text = "Über das Objekt malen, dann „Entfernen“." }
-            EditorView.Tool.MOVE -> { action.text = "Ausschneiden"; hint.text = "Objekt eng umfahren → „Ausschneiden“ → mit dem Finger verschieben → „Anwenden“." }
+            EditorView.Tool.ERASE -> { action.text = "Entfernen"; hint.text = "Auf das Objekt tippen (Smart) oder mit dem Pinsel übermalen, dann „Entfernen“. Mehrfach tippen = Auswahl erweitern." }
+            EditorView.Tool.MOVE -> { action.text = "Ausschneiden"; hint.text = "Objekt antippen (Smart) oder umfahren → „Ausschneiden“ → verschieben → „Anwenden“." }
             EditorView.Tool.DRAW -> hint.text = "Mit dem Finger zeichnen. Farbe oben wählen."
         }
     }
@@ -185,29 +205,99 @@ class EditorActivity : AppCompatActivity() {
             c.restore()
         }
 
+        var smartMode = true
+        private var downX = 0f; private var downY = 0f; private var moved = false
+        private val slop = 24f
+
+        private val segmenter by lazy {
+            SubjectSegmentation.getClient(
+                SubjectSegmenterOptions.Builder()
+                    .enableMultipleSubjects(
+                        SubjectSegmenterOptions.SubjectResultOptions.Builder().enableConfidenceMask().build()
+                    ).build()
+            )
+        }
+
         override fun onTouchEvent(e: MotionEvent): Boolean {
             val x = (e.x - ox) / scale; val y = (e.y - oy) / scale
-            val brush = 40f / scale
             if (floating != null) { // Objekt verschieben
                 if (e.action == MotionEvent.ACTION_MOVE) { floatX += x - lastX; floatY += y - lastY; invalidate() }
                 lastX = x; lastY = y
                 return true
             }
-            val paint = if (tool == Tool.DRAW) drawPaint else maskPaint
-            paint.strokeWidth = brush
-            if (tool == Tool.DRAW) drawPaint.color = brushColor
+            val isDraw = tool == Tool.DRAW
+            val paint = if (isDraw) drawPaint else maskPaint
+            paint.strokeWidth = 40f / scale
+            if (isDraw) drawPaint.color = brushColor
+            val target = if (isDraw) Canvas(image) else maskCanvas
+            val smartTap = !isDraw && smartMode
+
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    if (tool == Tool.DRAW) pushUndo()
-                    path.reset(); path.moveTo(x, y); path.lineTo(x + 0.1f, y)
+                    downX = e.x; downY = e.y; moved = false
+                    if (isDraw) pushUndo()
+                    path.reset(); path.moveTo(x, y)
                 }
-                MotionEvent.ACTION_MOVE, MotionEvent.ACTION_UP -> path.lineTo(x, y)
+                MotionEvent.ACTION_MOVE -> {
+                    if (!moved && Math.hypot((e.x - downX).toDouble(), (e.y - downY).toDouble()) > slop) {
+                        moved = true; path.lineTo(x, y)
+                    } else if (moved) path.lineTo(x, y)
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (moved) path.lineTo(x, y)
+                    else if (smartTap) { tapSelect(x.toInt(), y.toInt()); return true }
+                    else path.lineTo(x + 0.1f, y)
+                }
             }
-            val target = if (tool == Tool.DRAW) Canvas(image) else maskCanvas
-            target.drawPath(path, paint)
+            if (moved || e.action == MotionEvent.ACTION_UP) target.drawPath(path, paint)
             invalidate()
             return true
         }
+
+        /** Smart Select: erst KI (Vordergrund-Objekt unter dem Finger), sonst Farbfläche. */
+        private fun tapSelect(ix: Int, iy: Int) {
+            if (ix !in 0 until image.width || iy !in 0 until image.height) return
+            val snapshot = image.copy(Bitmap.Config.ARGB_8888, false)
+            fun wand() {
+                val w = snapshot.width; val h = snapshot.height
+                val px = IntArray(w * h).also { snapshot.getPixels(it, 0, w, 0, 0, w, h) }
+                addSelection(FloodSelect.select(px, w, h, ix, iy))
+            }
+            try {
+                segmenter.process(InputImage.fromBitmap(snapshot, 0))
+                    .addOnSuccessListener { res ->
+                        val w = snapshot.width
+                        val hit = res.subjects.firstOrNull { s ->
+                            val lx = ix - s.startX; val ly = iy - s.startY
+                            lx in 0 until s.width && ly in 0 until s.height &&
+                                (s.confidenceMask?.get(ly * s.width + lx) ?: 0f) > 0.5f
+                        }
+                        if (hit == null) wand() else {
+                            val sel = BooleanArray(w * snapshot.height)
+                            val cm = hit.confidenceMask
+                            if (cm == null) wand() else {
+                                for (yy in 0 until hit.height) for (xx in 0 until hit.width) {
+                                    if (cm.get(yy * hit.width + xx) > 0.5f) {
+                                        val gx = hit.startX + xx; val gy = hit.startY + yy
+                                        if (gx in 0 until w && gy in 0 until snapshot.height) sel[gy * w + gx] = true
+                                    }
+                                }
+                                addSelection(sel)
+                            }
+                        }
+                    }
+                    .addOnFailureListener { wand() } // z. B. Modell noch nicht geladen / kein Play Services
+            } catch (e: Exception) { wand() }
+        }
+
+        private fun addSelection(sel: BooleanArray) {
+            val w = image.width; val h = image.height
+            val colors = IntArray(w * h) { if (sel[it]) 0xFF000000.toInt() else 0 }
+            maskCanvas.drawBitmap(Bitmap.createBitmap(colors, w, h, Bitmap.Config.ARGB_8888), 0f, 0f, null)
+            postInvalidate()
+        }
+
+        fun clearSelection() { clearMask(); invalidate() }
 
         private fun pushUndo() {
             undoStack.addLast(image.copy(Bitmap.Config.ARGB_8888, false))
@@ -236,7 +326,7 @@ class EditorActivity : AppCompatActivity() {
             val mask = readMask()
             if (mask.none { it }) return
             post { pushUndo() }
-            val result = Inpainter.inpaint(image, Inpainter.dilate(mask, image.width, image.height, 3))
+            val result = Inpainter.inpaint(image, Inpainter.dilate(mask, image.width, image.height, 5))
             post { image = result.copy(Bitmap.Config.ARGB_8888, true); clearMask(); invalidate() }
         }
 

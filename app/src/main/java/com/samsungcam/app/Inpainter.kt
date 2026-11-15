@@ -15,9 +15,24 @@ object Inpainter {
     fun inpaint(src: Bitmap, mask: BooleanArray, smoothPasses: Int = 6): Bitmap {
         val w = src.width; val h = src.height
         require(mask.size == w * h)
-        val px = IntArray(w * h).also { src.getPixels(it, 0, w, 0, 0, w, h) }
-        fillInto(px, w, h, mask, smoothPasses)
-        return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888)
+        var l = w; var t = h; var r = -1; var b = -1
+        for (i in mask.indices) if (mask[i]) {
+            val x = i % w; val y = i / w
+            l = min(l, x); r = max(r, x); t = min(t, y); b = max(b, y)
+        }
+        val out = src.copy(Bitmap.Config.ARGB_8888, true)
+        if (r < 0) return out
+        // Nur die Umgebung des Objekts bearbeiten (schneller, ausreichend Kontext)
+        val m = 24
+        val x0 = max(0, l - m); val y0 = max(0, t - m)
+        val x1 = min(w - 1, r + m); val y1 = min(h - 1, b + m)
+        val cw = x1 - x0 + 1; val ch = y1 - y0 + 1
+        val px = IntArray(cw * ch).also { src.getPixels(it, 0, cw, x0, y0, cw, ch) }
+        val cm = BooleanArray(cw * ch)
+        for (y in 0 until ch) for (x in 0 until cw) cm[y * cw + x] = mask[(y + y0) * w + (x + x0)]
+        fillInto(px, cw, ch, cm, smoothPasses)
+        out.setPixels(px, 0, cw, x0, y0, cw, ch)
+        return out
     }
 
     /** Vergrößert die Maske um [r] Pixel (Quadrat), damit Objektränder mit entfernt werden. */
@@ -34,6 +49,7 @@ object Inpainter {
 
     /** Pixel-Array-Variante (testbar ohne Android-Bitmap). */
     fun fillInto(px: IntArray, w: Int, h: Int, mask: BooleanArray, smoothPasses: Int = 6) {
+        val original = px.copyOf()
         val known = BooleanArray(w * h) { !mask[it] }
         if (known.none { it }) return // nichts zum Abschauen vorhanden
 
@@ -66,6 +82,33 @@ object Inpainter {
                 }
                 px[i] = (0xFF shl 24) or ((r / n) shl 16) or ((g / n) shl 8) or (b / n)
             }
+        }
+        addGrain(px, w, h, mask, original)
+    }
+
+    /** Körnung wie in der Umgebung, damit die gefüllte Stelle nicht „plastikglatt“ wirkt. */
+    private fun addGrain(px: IntArray, w: Int, h: Int, mask: BooleanArray, original: IntArray) {
+        val ring = dilate(mask, w, h, 6)
+        var sum = 0.0; var sum2 = 0.0; var n = 0
+        for (y in 1 until h - 1) for (x in 1 until w - 1) {
+            val i = y * w + x
+            if (!ring[i] || mask[i]) continue
+            var avg = 0
+            for (dy in -1..1) for (dx in -1..1) avg += original[i + dy * w + dx] shr 8 and 255
+            val d = (original[i] shr 8 and 255) - avg / 9.0
+            sum += d; sum2 += d * d; n++
+        }
+        if (n < 20) return
+        val sigma = Math.sqrt(max(0.0, sum2 / n - (sum / n) * (sum / n))) * 0.9
+        if (sigma < 0.5) return
+        val rnd = java.util.Random(1)
+        for (i in px.indices) if (mask[i]) {
+            val g = (rnd.nextGaussian() * sigma).toInt()
+            val c = px[i]
+            val r = ((c shr 16 and 255) + g).coerceIn(0, 255)
+            val gg = ((c shr 8 and 255) + g).coerceIn(0, 255)
+            val b = ((c and 255) + g).coerceIn(0, 255)
+            px[i] = (0xFF shl 24) or (r shl 16) or (gg shl 8) or b
         }
     }
 
