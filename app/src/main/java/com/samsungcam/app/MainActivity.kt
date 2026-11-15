@@ -116,7 +116,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btnEraser).setOnClickListener {
             val uri = lastPhoto
             if (uri == null) Toast.makeText(this, R.string.no_photo, Toast.LENGTH_SHORT).show()
-            else startActivity(Intent(this, EraserActivity::class.java).setData(uri))
+            else startActivity(Intent(this, EditorActivity::class.java).setData(uri))
+        }
+
+        findViewById<android.view.View>(R.id.btnGallery).setOnClickListener {
+            startActivity(Intent(this, GalleryActivity::class.java))
         }
 
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) startCamera()

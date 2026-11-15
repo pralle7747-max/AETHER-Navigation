@@ -1,6 +1,8 @@
 package com.samsungcam.app
 
 import android.graphics.Bitmap
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Klassisches Inpainting (kein generatives Modell): Die Maske wird von außen nach innen
@@ -16,6 +18,18 @@ object Inpainter {
         val px = IntArray(w * h).also { src.getPixels(it, 0, w, 0, 0, w, h) }
         fillInto(px, w, h, mask, smoothPasses)
         return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888)
+    }
+
+    /** Vergrößert die Maske um [r] Pixel (Quadrat), damit Objektränder mit entfernt werden. */
+    fun dilate(mask: BooleanArray, w: Int, h: Int, r: Int): BooleanArray {
+        if (r <= 0) return mask.copyOf()
+        val tmp = BooleanArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) if (mask[y * w + x])
+            for (xx in max(0, x - r)..min(w - 1, x + r)) tmp[y * w + xx] = true
+        val out = BooleanArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) if (tmp[y * w + x])
+            for (yy in max(0, y - r)..min(h - 1, y + r)) out[yy * w + x] = true
+        return out
     }
 
     /** Pixel-Array-Variante (testbar ohne Android-Bitmap). */
@@ -69,6 +83,8 @@ object Inpainter {
         return found
     }
 
+    private fun ch(v: Float) = (v + 0.5f).toInt().coerceIn(0, 255)
+
     private fun average(i: Int, w: Int, h: Int, px: IntArray, known: BooleanArray): Int {
         val x = i % w; val y = i / w
         var r = 0f; var g = 0f; var b = 0f; var sum = 0f
@@ -82,6 +98,6 @@ object Inpainter {
             r += (c shr 16 and 255) * wt; g += (c shr 8 and 255) * wt; b += (c and 255) * wt; sum += wt
         }
         if (sum == 0f) return px[i]
-        return (0xFF shl 24) or ((r / sum).toInt() shl 16) or ((g / sum).toInt() shl 8) or (b / sum).toInt()
+        return (0xFF shl 24) or (ch(r / sum) shl 16) or (ch(g / sum) shl 8) or ch(b / sum)
     }
 }

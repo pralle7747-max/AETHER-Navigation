@@ -43,3 +43,22 @@ class AutoFramerTest {
         assertEquals(w * 0.1f, b.r, 1f); assertEquals(h.toFloat(), b.b, 1f)
     }
 }
+
+class InpainterTest {
+    @Test fun `Loch in einfarbigem Bild wird mit derselben Farbe gefuellt`() {
+        val w = 20; val h = 20
+        val red = 0xFFFF0000.toInt()
+        val px = IntArray(w * h) { red }
+        val mask = BooleanArray(w * h) { (it % w) in 8..12 && (it / w) in 8..12 }
+        for (i in mask.indices) if (mask[i]) px[i] = 0xFF000000.toInt()
+        Inpainter.fillInto(px, w, h, mask)
+        assertTrue(px.all { it == red })
+    }
+
+    @Test fun `dilate vergroessert die Maske`() {
+        val w = 9; val h = 9
+        val m = BooleanArray(w * h).also { it[4 * w + 4] = true }
+        val d = Inpainter.dilate(m, w, h, 2)
+        assertEquals(25, d.count { it })
+    }
+}
