@@ -10,6 +10,8 @@ import android.graphics.Canvas
 import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureRequest
 import android.net.Uri
@@ -19,6 +21,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.Surface
 import android.view.ScaleGestureDetector
 import android.widget.TextView
@@ -40,6 +43,14 @@ import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionFilter
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.google.android.material.chip.Chip
@@ -47,7 +58,10 @@ import com.google.android.material.chip.ChipGroup
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -72,6 +86,33 @@ class MainActivity : AppCompatActivity() {
     private var tierSizes = mapOf<Int, Size>()      // MP-Stufe -> echte Größe des Geräts
     private var selectedMp = 12
     private lateinit var resGroup: ChipGroup
+    private lateinit var chipTrack: Chip
+    private lateinit var chipVideo: Chip
+    private lateinit var statusLabel: TextView
+    private lateinit var btnShutter: android.widget.Button
+
+    // Objekt-Tracking
+    private val tracker = ObjectTracker()
+    private val pendingSelection = AtomicReference<RectF?>(null) // normiert im Frame
+    @Volatile private var lastRot = 90
+    @Volatile private var lastFw = 640
+    @Volatile private var lastFh = 480
+    private val lasso = Path()
+    private var lassoDown = false
+    private val segmenter by lazy {
+        SubjectSegmentation.getClient(
+            SubjectSegmenterOptions.Builder().enableMultipleSubjects(
+                SubjectSegmenterOptions.SubjectResultOptions.Builder().enableConfidenceMask().build()
+            ).build()
+        )
+    }
+
+    // Video
+    private var videoMode = false
+    private var videoCapture: VideoCapture<Recorder>? = null
+    private var recording: Recording? = null
+    private val audioPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* ohne Ton, wenn abgelehnt */ }
 
     private val analysisExecutor = Executors.newSingleThreadExecutor()
     private val saveExecutor = Executors.newSingleThreadExecutor()
@@ -102,6 +143,25 @@ class MainActivity : AppCompatActivity() {
         chipAutoZoom = findViewById(R.id.chipAutoZoom)
         chipHorizon = findViewById(R.id.chipHorizon)
         resGroup = findViewById(R.id.resGroup)
+        chipTrack = findViewById(R.id.chipTrack)
+        chipVideo = findViewById(R.id.chipVideo)
+        statusLabel = findViewById(R.id.statusLabel)
+        btnShutter = findViewById(R.id.btnShutter)
+
+        chipTrack.setOnCheckedChangeListener { _, on ->
+            if (on) {
+                showStatus("Objekt einkreisen oder antippen")
+            } else stopTracking()
+        }
+        chipVideo.setOnCheckedChangeListener { _, on ->
+            videoMode = on
+            if (on && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+                audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+            if (!on) { recording?.stop(); recording = null }
+            btnShutter.text = "●"
+            applyHorizonToPreview()
+            bindUseCases()
+        }
         resGroup.setOnCheckedStateChangeListener { _, ids ->
             val mp = when (ids.firstOrNull()) { R.id.chip50 -> 50; R.id.chip100 -> 100; else -> 12 }
             if (mp == selectedMp) return@setOnCheckedStateChangeListener
@@ -140,9 +200,13 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         })
-        previewView.setOnTouchListener { _, e -> pinch.onTouchEvent(e); true }
+        previewView.setOnTouchListener { _, e ->
+            if (chipTrack.isChecked && !tracker.active && pendingSelection.get() == null) handleSelectionTouch(e)
+            else pinch.onTouchEvent(e)
+            true
+        }
 
-        findViewById<android.view.View>(R.id.btnShutter).setOnClickListener { takePhoto() }
+        btnShutter.setOnClickListener { if (videoMode) toggleRecording() else takePhoto() }
         findViewById<android.view.View>(R.id.btnEraser).setOnClickListener {
             val uri = lastPhoto
             if (uri == null) Toast.makeText(this, R.string.no_photo, Toast.LENGTH_SHORT).show()
@@ -160,7 +224,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); horizon.start() }
     override fun onPause() { horizon.stop(); super.onPause() }
     override fun onDestroy() {
-        detector.close(); analysisExecutor.shutdown(); saveExecutor.shutdown(); super.onDestroy()
+        recording?.stop(); detector.close(); analysisExecutor.shutdown(); saveExecutor.shutdown(); super.onDestroy()
     }
 
     private fun chipFor(mp: Int) = when (mp) { 50 -> R.id.chip50; 100 -> R.id.chip100; else -> R.id.chip12 }
@@ -214,14 +278,31 @@ class MainActivity : AppCompatActivity() {
 
         try {
             p.unbindAll()
-            val cam = p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture, analysis)
+            val cam = if (videoMode) {
+                // Foto und Video getrennt binden (4 Streams gleichzeitig schaffen viele Handys nicht)
+                val recorder = Recorder.Builder().setQualitySelector(
+                    QualitySelector.fromOrderedList(
+                        listOf(Quality.FHD, Quality.HD, Quality.SD),
+                        FallbackStrategy.lowerQualityOrHigherThan(Quality.SD)
+                    )
+                ).build()
+                val vc = VideoCapture.withOutput(recorder)
+                videoCapture = vc
+                imageCapture = null
+                p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, vc, analysis)
+            } else {
+                videoCapture = null
+                imageCapture = capture
+                p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture, analysis)
+            }
             camera = cam
-            imageCapture = capture
             lastCrop = null
             val sensor = Camera2CameraInfo.from(cam.cameraInfo)
                 .getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
             if (sensor != null) {
-                framer = AutoFramer(sensor.width(), sensor.height()).also {
+                // Framer bleibt beim Umschalten (Foto/Video/MP) erhalten, damit das Tracking weiterläuft
+                if (framer == null) framer = AutoFramer(sensor.width(), sensor.height())
+                framer?.let {
                     it.follow = chipFollow.isChecked
                     it.autoZoom = chipAutoZoom.isChecked
                 }
@@ -243,6 +324,10 @@ class MainActivity : AppCompatActivity() {
         val f = framer
         if (media == null || f == null) { proxy.close(); return }
         val rot = proxy.imageInfo.rotationDegrees
+        lastRot = rot; lastFw = proxy.width; lastFh = proxy.height
+
+        // Objekt-Tracking hat Vorrang vor der Gesichtserkennung
+        if (tracker.active || pendingSelection.get() != null) { trackFrame(proxy, f); return }
         val upW = if (rot % 180 == 0) proxy.width else proxy.height
         val upH = if (rot % 180 == 0) proxy.height else proxy.width
 
@@ -266,6 +351,139 @@ class MainActivity : AppCompatActivity() {
             .addOnCompleteListener { proxy.close() }
     }
 
+    // ---------------- Objekt-Tracking ----------------
+
+    /** Analyse-Thread: Frame -> Tracker -> Ausschnitt + Warnungen (Main-Thread). */
+    private fun trackFrame(proxy: ImageProxy, f: AutoFramer) {
+        val plane = proxy.planes[0]
+        val gray = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride)
+        val rot = proxy.imageInfo.rotationDegrees
+        proxy.close()
+        val sel = pendingSelection.getAndSet(null)
+        if (sel != null) tracker.start(gray, sel.left, sel.top, sel.right, sel.bottom)
+        val res = tracker.update(gray)
+        runOnUiThread { onTrackResult(res, rot, f) }
+    }
+
+    private fun onTrackResult(res: TrackResult?, rot: Int, f: AutoFramer) {
+        if (res == null) return
+        f.trackingMode = true
+        val subject = if (res.found) f.subjectFromUpright(res.l, res.t, res.r, res.b, 0) else null
+        applyCrop(f.update(subject, SystemClock.uptimeMillis()))
+
+        // Zielrahmen auf dem Bildschirm
+        val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
+        val pts = listOf(res.l to res.t, res.r to res.t, res.l to res.b, res.r to res.b).map { (x, y) ->
+            val (u, v) = ViewMap.frameToUpright(x, y, rot)
+            ViewMap.uprightToView(u, v, overlay.width.toFloat(), overlay.height.toFloat(), uw, uh)
+        }
+        overlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
+        overlay.targetLost = tracker.isLost
+
+        // Warnstreifen: wie nah ist das Objekt am Rand des GESAMTEN Kamerabilds?
+        val last = lastSubjectBox ?: subject
+        if (subject != null) lastSubjectBox = subject
+        overlay.warn = (subject ?: last)?.let {
+            EdgeWarning.toUpright(EdgeWarning.levels(it, f.sensorW, f.sensorH), rot)
+        } ?: IntArray(4)
+
+        statusLabel.text = if (tracker.isLost) "Objekt verloren – suche …" else "Verfolge Objekt"
+        statusLabel.visibility = android.view.View.VISIBLE
+    }
+    private var lastSubjectBox: Box? = null
+
+    private fun showStatus(text: String) {
+        statusLabel.text = text; statusLabel.visibility = android.view.View.VISIBLE
+    }
+
+    private fun stopTracking() {
+        tracker.clear(); pendingSelection.set(null)
+        framer?.trackingMode = false
+        lastSubjectBox = null
+        overlay.target = null; overlay.warn = IntArray(4); overlay.targetLost = false; overlay.lasso = null
+        statusLabel.visibility = android.view.View.GONE
+    }
+
+    /** Einkreisen (Lasso) oder Antippen (Smart Select) im Live-Bild. */
+    private fun handleSelectionTouch(e: MotionEvent) {
+        when (e.action) {
+            MotionEvent.ACTION_DOWN -> { lasso.reset(); lasso.moveTo(e.x, e.y); lassoDown = true; overlay.lasso = lasso }
+            MotionEvent.ACTION_MOVE -> if (lassoDown) { lasso.lineTo(e.x, e.y); overlay.invalidate() }
+            MotionEvent.ACTION_UP -> {
+                lassoDown = false
+                val b = RectF(); lasso.computeBounds(b, true)
+                overlay.lasso = null
+                if (b.width() >= 80f && b.height() >= 80f) selectViewRect(b) else smartTap(e.x, e.y)
+            }
+            MotionEvent.ACTION_CANCEL -> { lassoDown = false; overlay.lasso = null }
+        }
+    }
+
+    /** Tippen: KI-Segmentierung des Live-Bilds; sonst Quadrat um die Tippstelle. */
+    private fun smartTap(x: Float, y: Float) {
+        val fallback = {
+            val half = 0.11f * minOf(previewView.width, previewView.height)
+            selectViewRect(RectF(x - half, y - half, x + half, y + half))
+        }
+        val bmp = previewView.bitmap
+        if (bmp == null) { fallback(); return }
+        val sx = bmp.width / previewView.width.toFloat(); val sy = bmp.height / previewView.height.toFloat()
+        val bx = (x * sx).toInt(); val by = (y * sy).toInt()
+        try {
+            segmenter.process(InputImage.fromBitmap(bmp, 0))
+                .addOnSuccessListener { res ->
+                    val hit = res.subjects.firstOrNull { s ->
+                        val lx = bx - s.startX; val ly = by - s.startY
+                        lx in 0 until s.width && ly in 0 until s.height &&
+                            (s.confidenceMask?.get(ly * s.width + lx) ?: 0f) > 0.5f
+                    }
+                    if (hit == null) fallback() else selectViewRect(RectF(
+                        hit.startX / sx, hit.startY / sy,
+                        (hit.startX + hit.width) / sx, (hit.startY + hit.height) / sy))
+                }
+                .addOnFailureListener { fallback() }
+        } catch (ex: Exception) { fallback() }
+    }
+
+    /** View-Rechteck -> Frame-Rechteck (normiert) und Tracking starten. */
+    private fun selectViewRect(r: RectF) {
+        val rot = lastRot
+        val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
+        val frame = listOf(r.left to r.top, r.right to r.top, r.left to r.bottom, r.right to r.bottom).map { (x, y) ->
+            val (u, v) = ViewMap.viewToUpright(x, y, previewView.width.toFloat(), previewView.height.toFloat(), uw, uh)
+            ViewMap.uprightToFrame(u.coerceIn(0f, 1f), v.coerceIn(0f, 1f), rot)
+        }
+        pendingSelection.set(RectF(
+            frame.minOf { it.first }, frame.minOf { it.second }, frame.maxOf { it.first }, frame.maxOf { it.second }))
+        showStatus("Verfolge Objekt")
+    }
+
+    // ---------------- Video ----------------
+
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun toggleRecording() {
+        val vc = videoCapture ?: return
+        recording?.let { it.stop(); return }
+        val cv = ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, "SCAM_${System.currentTimeMillis()}.mp4")
+            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/SamsungCam2")
+        }
+        val out = MediaStoreOutputOptions.Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(cv).build()
+        var pending = vc.output.prepareRecording(this, out)
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+            pending = pending.withAudioEnabled()
+        recording = pending.start(ContextCompat.getMainExecutor(this)) { ev ->
+            if (ev is VideoRecordEvent.Finalize) {
+                recording = null
+                btnShutter.text = "●"
+                Toast.makeText(this, if (!ev.hasError()) "Video gespeichert" else "Video fehlgeschlagen", Toast.LENGTH_SHORT).show()
+            }
+        }
+        btnShutter.text = "■"
+    }
+
     private fun applyCrop(c: Crop) {
         if (c == lastCrop) return
         lastCrop = c
@@ -281,7 +499,7 @@ class MainActivity : AppCompatActivity() {
         zoomLabel.text = "%.1f×".format(framer?.zoom ?: 1f)
     }
 
-    private fun horizonAngle() = if (chipHorizon.isChecked) horizon.angleDeg else 0f
+    private fun horizonAngle() = if (chipHorizon.isChecked && !videoMode) horizon.angleDeg else 0f
 
     private fun applyHorizonToPreview() {
         val a = horizonAngle()

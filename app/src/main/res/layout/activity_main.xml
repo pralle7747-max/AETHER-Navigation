@@ -29,6 +29,19 @@
         android:textColor="#FFFFFF"
         android:textSize="16sp" />
 
+    <TextView
+        android:id="@+id/statusLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="80dp"
+        android:background="#99000000"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="4dp"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,6 +49,27 @@
         android:background="#99000000"
         android:orientation="vertical"
         android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTrack"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Objekt-Tracking" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVideo"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="Video" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/resGroup"

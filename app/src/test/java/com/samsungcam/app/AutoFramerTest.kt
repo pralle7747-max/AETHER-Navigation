@@ -108,3 +108,74 @@ class FloodSelectTest {
         assertTrue(sel[15 * w + 15]); assertTrue(!sel[0])
     }
 }
+
+class GeometryTest {
+    @Test fun `Rotation hin und zurueck ist identisch`() {
+        for (rot in listOf(0, 90, 180, 270)) {
+            val (x, y) = ViewMap.uprightToFrame(0.2f, 0.7f, rot)
+            val (u, v) = ViewMap.frameToUpright(x, y, rot)
+            assertEquals(0.2f, u, 1e-5f); assertEquals(0.7f, v, 1e-5f)
+        }
+    }
+    @Test fun `View Mitte ist Bildmitte und Ansicht rechnet zurueck`() {
+        val (u, v) = ViewMap.viewToUpright(540f, 1200f, 1080f, 2400f, 3f, 4f)
+        assertEquals(0.5f, u, 1e-4f); assertEquals(0.5f, v, 1e-4f)
+        val (x, y) = ViewMap.uprightToView(0.3f, 0.6f, 1080f, 2400f, 3f, 4f)
+        val (u2, v2) = ViewMap.viewToUpright(x, y, 1080f, 2400f, 3f, 4f)
+        assertEquals(0.3f, u2, 1e-4f); assertEquals(0.6f, v2, 1e-4f)
+    }
+    @Test fun `Warnstufen gelb und rot an der richtigen Seite`() {
+        val w = 4000; val h = 3000
+        val l = EdgeWarning.levels(Box(300f, 1000f, 900f, 1500f), w, h) // links 7,5 % -> gelb
+        assertEquals(1, l[EdgeWarning.LEFT]); assertEquals(0, l[EdgeWarning.RIGHT])
+        val r = EdgeWarning.levels(Box(3900f, 1000f, 3990f, 1500f), w, h) // rechts 0,25 % -> rot
+        assertEquals(2, r[EdgeWarning.RIGHT])
+    }
+    @Test fun `Sensor links ist bei Rotation 90 oben im aufrechten Bild`() {
+        val up = EdgeWarning.toUpright(intArrayOf(2, 0, 0, 0), 90)
+        assertEquals(2, up[EdgeWarning.TOP])
+    }
+    @Test fun `Tracking Modus zoomt mindestens und zoomt bei Verlust heraus`() {
+        val f = AutoFramer(4000, 3000).apply { trackingMode = true; autoZoom = true }
+        var t = 0L
+        repeat(150) { t += 33; f.update(Box(1900f, 1400f, 2100f, 1600f), t) }
+        assertTrue(f.zoom >= 1.4f)
+        assertEquals(2000f, f.cx, 40f)
+        repeat(200) { t += 33; f.update(null, t) }
+        assertTrue(f.zoom < 1.2f)
+    }
+}
+
+class ObjectTrackerTest {
+    private val w = 160; private val h = 120
+    private val rnd = java.util.Random(7)
+    private val bg = IntArray(w * h) { rnd.nextInt(256) }
+    private val obj = IntArray(24 * 24) { rnd.nextInt(256) }
+
+    private fun frame(ox: Int, oy: Int, withObject: Boolean = true): Gray {
+        val d = bg.copyOf()
+        if (withObject) for (y in 0 until 24) for (x in 0 until 24) d[(oy + y) * w + ox + x] = obj[y * 24 + x]
+        return Gray(w, h, d)
+    }
+
+    @Test fun `folgt einem bewegten Objekt`() {
+        val tr = ObjectTracker()
+        tr.start(frame(40, 40), 40f / w, 40f / h, 64f / w, 64f / h)
+        var x = 40
+        repeat(25) { x += 3
+            val res = tr.update(frame(x, 40))!!
+            assertTrue(res.found)
+            assertEquals(x / w.toFloat(), res.l, 2f / w)
+        }
+    }
+
+    @Test fun `meldet Verlust und findet das Objekt wieder`() {
+        val tr = ObjectTracker()
+        tr.start(frame(40, 40), 40f / w, 40f / h, 64f / w, 64f / h)
+        repeat(5) { tr.update(frame(40, 40, withObject = false)) }
+        assertTrue(tr.isLost)
+        val res = tr.update(frame(100, 70))!!
+        assertTrue(res.found)
+        assertEquals(100 / w.toFloat(), res.l, 3f / w)
+    }
+}

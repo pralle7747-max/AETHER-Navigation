@@ -27,6 +27,7 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("androidx.camera:camera-view:$camerax")
+    implementation("androidx.camera:camera-video:$camerax")
     implementation("com.google.mlkit:face-detection:16.1.6")
     implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
     implementation("androidx.appcompat:appcompat:1.7.0")

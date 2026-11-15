@@ -23,8 +23,8 @@ data class Crop(val left: Int, val top: Int, val right: Int, val bottom: Int)
  *  - beide aus: nur manueller Zoom (Pinch), zentriert
  */
 class AutoFramer(
-    private val sensorW: Int,
-    private val sensorH: Int,
+    val sensorW: Int,
+    val sensorH: Int,
     private val maxZoom: Float = 5f,
     private val fill: Float = 0.45f,
     private val lostTimeoutMs: Long = 1500,
@@ -32,6 +32,13 @@ class AutoFramer(
     var follow = false
     var autoZoom = false
     var manualZoom = 1f
+
+    /** Objekt-Tracking: Ausschnitt folgt immer, mit Vorhalt; zoomt heraus, wenn das Objekt verloren ist. */
+    var trackingMode = false
+    var trackMinZoom = 1.4f   // etwas Zoom, damit überhaupt Schwenk-Spielraum da ist
+    var trackFill = 0.30f
+    private var vx = 0f; private var vy = 0f
+    private var lastSubject: Box? = null; private var lastSubjectMs = 0L
 
     var cx = sensorW / 2f; private set
     var cy = sensorH / 2f; private set
@@ -43,29 +50,48 @@ class AutoFramer(
     fun update(subject: Box?, nowMs: Long): Crop {
         val dt = if (lastUpdateMs == Long.MIN_VALUE) 33L else (nowMs - lastUpdateMs).coerceIn(1, 200)
         lastUpdateMs = nowMs
-        if (subject != null) lastSeenMs = nowMs
-        val lost = subject == null && (lastSeenMs == Long.MIN_VALUE || nowMs - lastSeenMs > lostTimeoutMs)
+        if (subject != null) {
+            lastSubject?.let { p ->
+                val d = (nowMs - lastSubjectMs).coerceAtLeast(1).toFloat()
+                vx = vx * 0.7f + 0.3f * (subject.cx - p.cx) / d
+                vy = vy * 0.7f + 0.3f * (subject.cy - p.cy) / d
+            }
+            lastSubject = subject; lastSubjectMs = nowMs
+            lastSeenMs = nowMs
+        }
+        val timeout = if (trackingMode) 600L else lostTimeoutMs
+        val lost = subject == null && (lastSeenMs == Long.MIN_VALUE || nowMs - lastSeenMs > timeout)
+        val fillNow = if (trackingMode) trackFill else fill
+        val minZ = if (trackingMode) trackMinZoom else 1f
 
         val targetZoom = when {
-            !autoZoom -> manualZoom
+            !autoZoom -> manualZoom.coerceAtLeast(minZ)
             subject != null -> {
                 val frac = max(subject.w / sensorW, subject.h / sensorH).coerceAtLeast(0.01f)
-                (fill / frac).coerceIn(1f, maxZoom)
+                (fillNow / frac).coerceIn(minZ, maxZoom)
             }
-            lost -> 1f
+            lost -> 1f // Objekt weg: Blickfeld aufmachen, damit man es wiederfindet
             else -> zoom
         }.coerceIn(1f, maxZoom)
 
+        val following = follow || trackingMode
         val (tx, ty) = when {
-            !follow -> sensorW / 2f to sensorH / 2f
-            subject != null -> subject.cx to subject.cy
-            lost -> sensorW / 2f to sensorH / 2f
+            !following -> sensorW / 2f to sensorH / 2f
+            subject != null -> {
+                if (trackingMode) { // Vorhalt: dorthin zielen, wo das Objekt gleich ist
+                    val leadX = (vx * 150f).coerceIn(-sensorW / zoom * 0.1f, sensorW / zoom * 0.1f)
+                    val leadY = (vy * 150f).coerceIn(-sensorH / zoom * 0.1f, sensorH / zoom * 0.1f)
+                    (subject.cx + leadX) to (subject.cy + leadY)
+                } else subject.cx to subject.cy
+            }
+            lost && !trackingMode -> sensorW / 2f to sensorH / 2f
             else -> cx to cy
         }
 
+        val panTau = if (trackingMode) 140f else 250f
         zoom += (targetZoom - zoom) * smooth(dt, 450f)
-        cx += (tx - cx) * smooth(dt, 250f)
-        cy += (ty - cy) * smooth(dt, 250f)
+        cx += (tx - cx) * smooth(dt, panTau)
+        cy += (ty - cy) * smooth(dt, panTau)
         return crop()
     }
 

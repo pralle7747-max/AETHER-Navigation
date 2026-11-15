@@ -7,6 +7,9 @@ Kamera-App für Android (Kotlin, CameraX, ML Kit) mit:
 | **Follow** (an/aus) | Gesichtserkennung (ML Kit) → Ausschnitt (`SCALER_CROP_REGION`) schwenkt weich zum Motiv |
 | **Auto-Zoom** (an/aus) | Zoom wird so geregelt, dass das Motiv ~45 % des Bildes füllt; ohne Motiv zurück auf 1× |
 | Manueller Zoom | Pinch (wirkt, wenn Auto-Zoom aus ist) |
+| **Objekt-Tracking** | Chip „Objekt-Tracking“: Objekt im Live-Bild einkreisen oder antippen (KI-Auswahl). Ausschnitt schwenkt/zoomt mit (mit Vorhalt); geht das Objekt verloren, zoomt die App heraus und sucht es im ganzen Bild |
+| **Warnstreifen** | Gelber Streifen am Bildrand, wenn das Objekt dem Rand des gesamten Kamerabilds nahekommt (<12 %), roter bei <4 %; bei Verlust rot rundum |
+| **Video** | Chip „Video“: Aufnahme mit Ton (Movies/SamsungCam2), Tracking/Follow/Auto-Zoom wirken im Video mit |
 | **Auflösung 12 / 50 / 100 MP** | Die App fragt das Gerät, welche JPEG-Größen es Apps anbietet; nicht verfügbare Stufen sind ausgegraut und melden das |
 | **Horizont-Lock** (an/aus) | Gravitationssensor mit adaptiver Glättung, rastet bei 0° ein (+ Vibrationstick), Querformat wird erkannt und aufrecht gespeichert, Wasserwaage im Bild |
 | **Galerie** | Alle Fotos des Geräts als Raster, Antippen öffnet den Editor |
@@ -33,6 +36,8 @@ Unit-Tests der Follow/Auto-Zoom-Logik: `./gradlew :app:testDebugUnitTest`.
   Gerät abweichen – ggf. in `MainActivity.applyHorizonToPreview` bzw. `levelHorizon` anpassen.
 - 50/100 MP gibt es nur, wenn Samsung die Auflösung für Drittapps freigibt. Viele A-Modelle haben 50 MP, aber keinen 100-MP-Sensor, dann bleibt 100 MP ausgegraut. Neigungskorrektur bei 50 MP braucht viel Speicher (Fallback: halbe Auflösung).
 - Smart Select lädt beim ersten Mal ein ML-Kit-Modell über Google Play Services (Internet nötig); ohne Modell greift die Farbflächen-Auswahl.
+- Tracking ist ein eigener Vorlagen-Tracker (keine KI): gut bei klar abgegrenzten, texturierten Objekten (RC-Car, Radfahrer), schwächer bei sehr schnellen Bewegungen, Verdeckung oder einfarbigen Objekten. Im Video-Modus ist der Horizont-Lock aus (Video wird nicht gerade gedreht).
+- Der Ausschnitt ist digital (Crop): Schwenken geht nur, wenn herangezoomt ist; deshalb startet das Tracking mit mindestens 1,4× Zoom.
 - Follow/Auto-Zoom erkennen Gesichter (Personen). Andere Objekte: ML Kit Object Detection ergänzen.
 - Der Radierer funktioniert für kleine Objekte; für große Flächen ein ML-Modell (z. B. LaMa/TFLite) einbauen.
 - Eine Samsung-eigene Kamera-App (One UI) lässt sich so nicht ersetzen; das hier ist eine eigenständige App.
