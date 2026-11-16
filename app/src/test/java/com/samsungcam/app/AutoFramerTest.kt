@@ -290,3 +290,21 @@ class FusionTest {
         assertTrue(fu.current(900) == null)
     }
 }
+
+class SteadyTest {
+    private fun jitter(steady: Boolean): Double {
+        val f = AutoFramer(4000, 3000).apply { trackingMode = true; autoZoom = true
+            if (steady) { steadiness = 2.2f; deadZone = 0.12f } }
+        val rnd = java.util.Random(9)
+        var t = 0L; val cs = ArrayList<Float>()
+        repeat(240) { i -> t += 33
+            val cx = 2000f + (rnd.nextGaussian() * 90).toFloat() // zittriges Objekt
+            f.update(Box(cx - 100f, 1400f, cx + 100f, 1600f), t)
+            if (i > 60) cs.add(f.cx) }
+        val m = cs.average(); return Math.sqrt(cs.map { (it - m) * (it - m) }.average())
+    }
+    @Test fun `Super Steady bewegt die Kamera deutlich ruhiger`() {
+        val normal = jitter(false); val steady = jitter(true)
+        assertTrue("steady $steady < normal $normal", steady < 0.8 * normal)
+    }
+}

@@ -25,6 +25,15 @@ class Gray(val w: Int, val h: Int, val d: IntArray) {
     }
 }
 
+/** Halbe Auflösung (2×2-Mittelwert). */
+fun Gray.half(): Gray {
+    val nw = w / 2; val nh = h / 2
+    val out = IntArray(nw * nh)
+    for (y in 0 until nh) for (x in 0 until nw)
+        out[y * nw + x] = (d[2 * y * w + 2 * x] + d[2 * y * w + 2 * x + 1] + d[(2 * y + 1) * w + 2 * x] + d[(2 * y + 1) * w + 2 * x + 1]) / 4
+    return Gray(nw, nh, out)
+}
+
 /** Bild um die Mitte im Uhrzeigersinn um [deg] drehen (Ränder werden mit dem Randpixel gefüllt). */
 fun Gray.rotatedCw(deg: Float): Gray {
     if (kotlin.math.abs(deg) < 0.3f) return this
@@ -48,18 +57,30 @@ data class TrackResult(val l: Float, val t: Float, val r: Float, val b: Float, v
  * geht, wird im ganzen Bild nach der Vorlage gesucht.
  * Koordinaten rein/raus: normiert 0..1 im Frame.
  */
-class ObjectTracker {
-    @Volatile var active = false; private set
+/** Gemeinsame Schnittstelle für Frame-Tracker (Frame = Graustufenbild, Ergebnis normiert 0..1). */
+interface FrameTracker {
+    val active: Boolean
+    val isLost: Boolean
+    /** Breite, in der der Tracker seine Frames haben möchte. */
+    val frameWidth: Int
+    fun start(g: Gray, l: Float, t: Float, r: Float, b: Float)
+    fun update(g: Gray): TrackResult?
+    fun clear()
+}
+
+class ObjectTracker : FrameTracker {
+    @Volatile override var active = false; private set
+    override val frameWidth get() = 160
     private var lostFrames = 0
-    val isLost get() = lostFrames > 0
+    override val isLost get() = lostFrames > 0
 
     private var cx = 0f; private var cy = 0f
     private var tpl = IntArray(0); private var tw = 0; private var th = 0
     private var anchor = IntArray(0); private var aw = 0; private var ah = 0
 
-    fun clear() { active = false; lostFrames = 0 }
+    override fun clear() { active = false; lostFrames = 0 }
 
-    fun start(g: Gray, l: Float, t: Float, r: Float, b: Float) {
+    override fun start(g: Gray, l: Float, t: Float, r: Float, b: Float) {
         val minSide = 10
         val bw = max(minSide.toFloat(), (r - l) * g.w).coerceAtMost(g.w * 0.8f)
         val bh = max(minSide.toFloat(), (b - t) * g.h).coerceAtMost(g.h * 0.8f)
@@ -71,7 +92,7 @@ class ObjectTracker {
         lostFrames = 0; active = true
     }
 
-    fun update(g: Gray): TrackResult? {
+    override fun update(g: Gray): TrackResult? {
         if (!active) return null
         val ii = integral(g)
         var best = Float.MAX_VALUE; var bx = 0; var by = 0; var bs = 1f

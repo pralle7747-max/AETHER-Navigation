@@ -15,6 +15,7 @@ import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureRequest
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
@@ -94,6 +95,13 @@ class MainActivity : AppCompatActivity() {
     private var selectedMp = 12
     private lateinit var resGroup: ChipGroup
     private lateinit var chipTrack: Chip
+    private lateinit var chipSteady: Chip
+    private lateinit var chipSuperSteady: Chip
+    private var steady = false
+    private var superSteady = false
+    private var oisSupported = false
+    private var videoEis = false
+    private var previewEis = false
     private lateinit var lensGroup: ChipGroup
     private var lenses = listOf<Lens>()
     private var currentSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -104,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnShutter: android.widget.Button
 
     // Objekt-Tracking
-    private val tracker = ObjectTracker()
+    private val tracker: DualTracker by lazy { DualTracker(applicationContext) }
     private val pendingSelection = AtomicReference<RectF?>(null) // normiert im Frame
     @Volatile private var lastRot = 90
     @Volatile private var lastFw = 640
@@ -180,6 +188,27 @@ class MainActivity : AppCompatActivity() {
         chipHorizon = findViewById(R.id.chipHorizon)
         resGroup = findViewById(R.id.resGroup)
         chipTrack = findViewById(R.id.chipTrack)
+        chipSteady = findViewById(R.id.chipSteady)
+        chipSuperSteady = findViewById(R.id.chipSuperSteady)
+        chipSteady.setOnCheckedChangeListener { _, on ->
+            steady = on
+            if (!on && chipSuperSteady.isChecked) chipSuperSteady.isChecked = false
+            if (on) Toast.makeText(this, "Steady – optische Stabilisierung ${tick(oisSupported)}, " +
+                "Video-Stabilisierung ${tick(videoEis)}, Vorschau-Stabilisierung ${tick(previewEis)}", Toast.LENGTH_LONG).show()
+            bindUseCases()
+        }
+        chipSuperSteady.setOnCheckedChangeListener { _, on ->
+            superSteady = on
+            framer?.steadiness = if (on) 2.2f else 1f
+            framer?.deadZone = if (on) 0.12f else 0.07f
+            if (on) {
+                if (!chipSteady.isChecked) chipSteady.isChecked = true
+                // Super Steady: Ultraweitwinkel (größte Stabilisierungsreserve), falls für Apps freigegeben
+                lenses.firstOrNull { !it.front && it.rel < 0.8f }?.let { uw ->
+                    lensGroup.findViewWithTag<Chip>(uw.id)?.let { c -> if (!c.isChecked) c.isChecked = true }
+                } ?: Toast.makeText(this, "Keine Ultraweit-Linse für Apps freigegeben – Super Steady nutzt die aktuelle Linse.", Toast.LENGTH_LONG).show()
+            }
+        }
         lensGroup = findViewById(R.id.lensGroup)
         chipVideo = findViewById(R.id.chipVideo)
         statusLabel = findViewById(R.id.statusLabel)
@@ -263,6 +292,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         recording?.stop(); aiDetector?.close(); detector.close(); analysisExecutor.shutdown(); saveExecutor.shutdown(); super.onDestroy()
     }
+
+    private fun tick(b: Boolean) = if (b) "✓" else "✗"
 
     private fun chipFor(mp: Int) = when (mp) { 50 -> R.id.chip50; 100 -> R.id.chip100; else -> R.id.chip12 }
 
@@ -348,6 +379,12 @@ class MainActivity : AppCompatActivity() {
         val info = currentSelector.filter(p.availableCameraInfos).firstOrNull() ?: return
         val map = Camera2CameraInfo.from(info)
             .getCameraCharacteristic(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP) ?: return
+        val c2 = Camera2CameraInfo.from(info)
+        oisSupported = c2.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+            ?.contains(CameraCharacteristics.LENS_OPTICAL_STABILIZATION_MODE_ON) == true
+        val vs = c2.getCameraCharacteristic(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+        videoEis = vs?.contains(CameraCharacteristics.CONTROL_VIDEO_STABILIZATION_MODE_ON) == true
+        previewEis = Build.VERSION.SDK_INT >= 33 && vs?.contains(2) == true // 2 = PREVIEW_STABILIZATION
         val all = (map.getOutputSizes(ImageFormat.JPEG)?.toList().orEmpty() +
             map.getHighResolutionOutputSizes(ImageFormat.JPEG)?.toList().orEmpty()).map { it.width to it.height }
         tierSizes = ResolutionTiers.tiers.mapNotNull { mp ->
@@ -370,7 +407,9 @@ class MainActivity : AppCompatActivity() {
                 })
             }.build()
 
-        val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+        val preview = Preview.Builder().apply {
+            if (steady && videoMode && previewEis && Build.VERSION.SDK_INT >= 33) setPreviewStabilizationEnabled(true)
+        }.build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
         val capture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setResolutionSelector(captureSelector)
@@ -390,7 +429,7 @@ class MainActivity : AppCompatActivity() {
                         FallbackStrategy.lowerQualityOrHigherThan(Quality.SD)
                     )
                 ).build()
-                val vc = VideoCapture.withOutput(recorder)
+                val vc = VideoCapture.Builder(recorder).apply { if (steady && videoEis) setVideoStabilizationEnabled(true) }.build()
                 videoCapture = vc
                 imageCapture = null
                 p.bindToLifecycle(this, currentSelector, preview, vc, analysis)
@@ -460,7 +499,7 @@ class MainActivity : AppCompatActivity() {
     /** Analyse-Thread: Frame -> Vorlagen-Tracker (jedes Bild) + KI-Detektor (asynchron, ~10–15×/s). */
     private fun trackFrame(proxy: ImageProxy, f: AutoFramer) {
         val plane = proxy.planes[0]
-        val raw = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride)
+        val raw = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride, tracker.frameWidth)
         val rot = proxy.imageInfo.rotationDegrees
         val crop = f.cropNow() // Ausschnitt zum Zeitpunkt dieses Frames
         val now = SystemClock.uptimeMillis()
@@ -559,7 +598,7 @@ class MainActivity : AppCompatActivity() {
         } ?: IntArray(4)
 
         statusLabel.text = if (lost) "Objekt verloren – suche …"
-            else "${Labels.german(fu.label)} · " + if (fu.mode == TargetFusion.Mode.AI) "KI-Erkennung" else "Vorlage"
+            else "${Labels.german(fu.label)} · " + (if (fu.mode == TargetFusion.Mode.AI) "KI-Erkennung" else "Vorlage") + (if (tracker.vitActive) " · KI-Tracker" else "")
         statusLabel.visibility = android.view.View.VISIBLE
     }
     private var lastSubjectBox: Box? = null
@@ -670,7 +709,11 @@ class MainActivity : AppCompatActivity() {
                     .setCaptureRequestOption(
                         CaptureRequest.SCALER_CROP_REGION,
                         android.graphics.Rect(c.left, c.top, c.right, c.bottom)
-                    ).build()
+                    ).apply {
+                        if (steady && oisSupported) setCaptureRequestOption(
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON)
+                    }.build()
             )
         }
         zoomLabel.text = "%.1f×".format(framer?.zoom ?: 1f)

@@ -20,16 +20,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    androidResources { noCompress += "tflite" }
+    androidResources { noCompress += listOf("tflite", "onnx") }
 }
 
 dependencies {
-    val camerax = "1.3.4"
+    val camerax = "1.4.0"
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("androidx.camera:camera-view:$camerax")
     implementation("androidx.camera:camera-video:$camerax")
+    implementation("org.opencv:opencv:4.10.0")
     implementation("com.google.mlkit:face-detection:16.1.6")
     implementation("com.google.mlkit:object-detection-custom:17.0.2")
     implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")

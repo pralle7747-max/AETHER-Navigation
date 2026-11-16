@@ -35,6 +35,9 @@ class AutoFramer(
 
     /** Objekt-Tracking: Ausschnitt folgt immer, mit Vorhalt; zoomt heraus, wenn das Objekt verloren ist. */
     var trackingMode = false
+    /** Super Steady: träger, ruhiger Schwenk (1 = normal, 2+ = sehr ruhig) und größere Totzone. */
+    var steadiness = 1f
+    var deadZone = 0.07f
     var trackMinZoom = 1.4f   // etwas Zoom, damit überhaupt Schwenk-Spielraum da ist
     var trackFill = 0.30f
     private var vx = 0f; private var vy = 0f
@@ -80,7 +83,7 @@ class AutoFramer(
             subject != null -> {
                 if (trackingMode) {
                     // Totzone: kleine Bewegungen in der Bildmitte werden nicht nachgeregelt (ruhiges Bild)
-                    val dzX = sensorW / zoom * 0.07f; val dzY = sensorH / zoom * 0.07f
+                    val dzX = sensorW / zoom * deadZone; val dzY = sensorH / zoom * deadZone
                     val dx = subject.cx - cx; val dy = subject.cy - cy
                     val tx0 = if (kotlin.math.abs(dx) <= dzX) cx else subject.cx - dzX * kotlin.math.sign(dx)
                     val ty0 = if (kotlin.math.abs(dy) <= dzY) cy else subject.cy - dzY * kotlin.math.sign(dy)
@@ -91,7 +94,7 @@ class AutoFramer(
             else -> cx to cy
         }
 
-        val panTau = if (trackingMode) 140f else 250f
+        val panTau = (if (trackingMode) 140f else 250f) * steadiness
         zoom += (targetZoom - zoom) * smooth(dt, 450f)
         cx += (tx - cx) * smooth(dt, panTau)
         cy += (ty - cy) * smooth(dt, panTau)
