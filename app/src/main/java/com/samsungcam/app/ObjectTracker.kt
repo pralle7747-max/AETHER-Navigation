@@ -25,6 +25,21 @@ class Gray(val w: Int, val h: Int, val d: IntArray) {
     }
 }
 
+/** Bild um die Mitte im Uhrzeigersinn um [deg] drehen (Ränder werden mit dem Randpixel gefüllt). */
+fun Gray.rotatedCw(deg: Float): Gray {
+    if (kotlin.math.abs(deg) < 0.3f) return this
+    val r = Math.toRadians(deg.toDouble()); val c = Math.cos(r).toFloat(); val s = Math.sin(r).toFloat()
+    val cx = (w - 1) / 2f; val cy = (h - 1) / 2f // Pixelmitten-Koordinaten
+    val out = IntArray(w * h)
+    for (y in 0 until h) for (x in 0 until w) {
+        val dx = x - cx; val dy = y - cy
+        val sx = (cx + dx * c + dy * s).roundToInt().coerceIn(0, w - 1)
+        val sy = (cy - dx * s + dy * c).roundToInt().coerceIn(0, h - 1)
+        out[y * w + x] = d[sy * w + sx]
+    }
+    return Gray(w, h, out)
+}
+
 data class TrackResult(val l: Float, val t: Float, val r: Float, val b: Float, val found: Boolean)
 
 /**

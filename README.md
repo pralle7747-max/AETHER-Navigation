@@ -40,6 +40,7 @@ Unit-Tests der Follow/Auto-Zoom-Logik: `./gradlew :app:testDebugUnitTest`.
 - Tracking ist ein eigener Vorlagen-Tracker (keine KI): gut bei klar abgegrenzten, texturierten Objekten (RC-Car, Radfahrer), schwächer bei sehr schnellen Bewegungen, Verdeckung oder einfarbigen Objekten. Im Video-Modus ist der Horizont-Lock aus (Video wird nicht gerade gedreht).
 - Der Ausschnitt ist digital (Crop): Schwenken geht nur, wenn herangezoomt ist; deshalb startet das Tracking mit mindestens 1,4× Zoom.
 - Welche Linsen erscheinen, entscheidet Samsung: Nicht jede physische Linse wird Drittapps freigegeben. Der Linsenwechsel ist manuell (kein automatischer Wechsel beim Zoomen). Die Makro-Erkennung ist eine Schätzung („Makro?").
+- Horizont-Lock nutzt den Gyro-gestützten Rotationssensor (fällt auf den Schwerkraftsensor zurück). Vorschau, Zielrahmen und Lasso drehen gemeinsam; der Tracker dreht jeden Frame um den Rollwinkel zurück und bleibt so beim Drehen am Objekt. Die Oberfläche ist weiter auf Hochformat gesperrt: Im Querformat ist die Vorschau seitlich, Fotos werden aber aufrecht gespeichert.
 - Follow/Auto-Zoom erkennen Gesichter (Personen). Andere Objekte: ML Kit Object Detection ergänzen.
 - Der Radierer funktioniert für kleine Objekte; für große Flächen ein ML-Modell (z. B. LaMa/TFLite) einbauen.
 - Eine Samsung-eigene Kamera-App (One UI) lässt sich so nicht ersetzen; das hier ist eine eigenständige App.

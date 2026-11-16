@@ -73,6 +73,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var overlay: OverlayView
+    private lateinit var stageOverlay: OverlayView
+    private lateinit var stage: android.view.View
     private lateinit var zoomLabel: TextView
     private lateinit var chipFollow: Chip
     private lateinit var chipAutoZoom: Chip
@@ -144,6 +146,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         previewView = findViewById(R.id.preview)
         overlay = findViewById(R.id.overlay)
+        stageOverlay = findViewById<OverlayView>(R.id.stageOverlay).also { it.stage = true }
+        stage = findViewById(R.id.stage)
+        // TextureView statt SurfaceView: nur so lässt sich die Vorschau sauber drehen/skalieren
+        previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         zoomLabel = findViewById(R.id.zoomLabel)
         chipFollow = findViewById(R.id.chipFollow)
         chipAutoZoom = findViewById(R.id.chipAutoZoom)
@@ -429,12 +435,24 @@ class MainActivity : AppCompatActivity() {
     /** Analyse-Thread: Frame -> Tracker -> Ausschnitt + Warnungen (Main-Thread). */
     private fun trackFrame(proxy: ImageProxy, f: AutoFramer) {
         val plane = proxy.planes[0]
-        val gray = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride)
+        val raw = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride)
         val rot = proxy.imageInfo.rotationDegrees
         proxy.close()
+        // Frame um den Rollwinkel des Handys zurückdrehen: Das Objekt sieht für den Tracker immer gleich
+        // aus, auch wenn man das Handy dreht. (Frontkamera-Bild ist ungespiegelt -> Gegenrichtung.)
+        val phi = horizon.rollDeg * (if (isFront) -1f else 1f)
+        val gray = raw.rotatedCw(phi)
         val sel = pendingSelection.getAndSet(null)
-        if (sel != null) tracker.start(gray, sel.left, sel.top, sel.right, sel.bottom)
-        val res = tracker.update(gray)
+        if (sel != null) {
+            val b = FrameRotate.box(sel.left, sel.top, sel.right, sel.bottom, raw.w, raw.h, phi)
+            tracker.start(gray, b[0], b[1], b[2], b[3])
+        }
+        val lev = tracker.update(gray)
+        // Ergebnis zurück ins ungedrehte Sensor-Frame
+        val res = lev?.let {
+            val b = FrameRotate.box(it.l, it.t, it.r, it.b, raw.w, raw.h, -phi)
+            TrackResult(b[0], b[1], b[2], b[3], it.found)
+        }
         runOnUiThread { onTrackResult(res, rot, f) }
     }
 
@@ -449,10 +467,10 @@ class MainActivity : AppCompatActivity() {
         val pts = listOf(res.l to res.t, res.r to res.t, res.l to res.b, res.r to res.b).map { (x, y) ->
             val (u0, v) = ViewMap.frameToUpright(x, y, rot)
             val u = if (isFront) 1f - u0 else u0 // Selfie-Vorschau ist gespiegelt
-            ViewMap.uprightToView(u, v, overlay.width.toFloat(), overlay.height.toFloat(), uw, uh)
+            ViewMap.uprightToView(u, v, stageOverlay.width.toFloat(), stageOverlay.height.toFloat(), uw, uh)
         }
-        overlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
-        overlay.targetLost = tracker.isLost
+        stageOverlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
+        stageOverlay.targetLost = tracker.isLost
 
         // Warnstreifen: wie nah ist das Objekt am Rand des GESAMTEN Kamerabilds?
         val last = lastSubjectBox ?: subject
@@ -476,22 +494,22 @@ class MainActivity : AppCompatActivity() {
         tracker.clear(); pendingSelection.set(null)
         framer?.trackingMode = false
         lastSubjectBox = null
-        overlay.target = null; overlay.warn = IntArray(4); overlay.targetLost = false; overlay.lasso = null
+        stageOverlay.target = null; overlay.warn = IntArray(4); stageOverlay.targetLost = false; stageOverlay.lasso = null
         statusLabel.visibility = android.view.View.GONE
     }
 
     /** Einkreisen (Lasso) oder Antippen (Smart Select) im Live-Bild. */
     private fun handleSelectionTouch(e: MotionEvent) {
         when (e.action) {
-            MotionEvent.ACTION_DOWN -> { lasso.reset(); lasso.moveTo(e.x, e.y); lassoDown = true; overlay.lasso = lasso }
-            MotionEvent.ACTION_MOVE -> if (lassoDown) { lasso.lineTo(e.x, e.y); overlay.invalidate() }
+            MotionEvent.ACTION_DOWN -> { lasso.reset(); lasso.moveTo(e.x, e.y); lassoDown = true; stageOverlay.lasso = lasso }
+            MotionEvent.ACTION_MOVE -> if (lassoDown) { lasso.lineTo(e.x, e.y); stageOverlay.invalidate() }
             MotionEvent.ACTION_UP -> {
                 lassoDown = false
                 val b = RectF(); lasso.computeBounds(b, true)
-                overlay.lasso = null
+                stageOverlay.lasso = null
                 if (b.width() >= 80f && b.height() >= 80f) selectViewRect(b) else smartTap(e.x, e.y)
             }
-            MotionEvent.ACTION_CANCEL -> { lassoDown = false; overlay.lasso = null }
+            MotionEvent.ACTION_CANCEL -> { lassoDown = false; stageOverlay.lasso = null }
         }
     }
 
@@ -580,9 +598,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyHorizonToPreview() {
         val a = horizonAngle()
-        previewView.rotation = a
-        val s = coverScale(a, previewView.width.toFloat(), previewView.height.toFloat())
-        previewView.scaleX = s; previewView.scaleY = s
+        stage.rotation = a // Vorschau + Zielrahmen/Lasso drehen gemeinsam
+        val s = coverScale(a, stage.width.toFloat(), stage.height.toFloat())
+        stage.scaleX = s; stage.scaleY = s
     }
 
     private fun newPhotoValues(prefix: String) = ContentValues().apply {

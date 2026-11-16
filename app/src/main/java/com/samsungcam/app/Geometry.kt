@@ -53,3 +53,21 @@ object EdgeWarning {
         return out
     }
 }
+
+/** Drehung von Analyse-Frames, damit der Tracker die Welt immer „gerade“ sieht (unabhängig vom Rollen des Handys). */
+object FrameRotate {
+    /** Punkt (normiert 0..1, Bildmaße w×h) um die Bildmitte im Uhrzeigersinn um [deg] drehen. */
+    fun point(nx: Float, ny: Float, w: Int, h: Int, deg: Float): Pair<Float, Float> {
+        val r = Math.toRadians(deg.toDouble()); val c = Math.cos(r).toFloat(); val s = Math.sin(r).toFloat()
+        val dx = (nx - 0.5f) * w; val dy = (ny - 0.5f) * h
+        return (0.5f + (dx * c - dy * s) / w) to (0.5f + (dx * s + dy * c) / h)
+    }
+
+    /** Rechteck (l,t,r,b normiert) drehen: umschließendes Rechteck der gedrehten Ecken. */
+    fun box(l: Float, t: Float, r: Float, b: Float, w: Int, h: Int, deg: Float): FloatArray {
+        val p = listOf(l to t, r to t, l to b, r to b).map { point(it.first, it.second, w, h, deg) }
+        return floatArrayOf(
+            p.minOf { it.first }.coerceIn(0f, 1f), p.minOf { it.second }.coerceIn(0f, 1f),
+            p.maxOf { it.first }.coerceIn(0f, 1f), p.maxOf { it.second }.coerceIn(0f, 1f))
+    }
+}

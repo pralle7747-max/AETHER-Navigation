@@ -26,9 +26,9 @@ object HorizonMath {
     }
 
     /** Adaptive Glättung: ruhig bei kleinen Zittern, schnell bei echten Bewegungen; rastet bei 0° ein. */
-    fun smooth(prev: Float, target: Float): Float {
+    fun smooth(prev: Float, target: Float, minAlpha: Float = 0.04f): Float {
         val d = target - prev
-        val alpha = (0.04f + abs(d) / 15f).coerceIn(0.04f, 0.6f)
+        val alpha = (minAlpha + abs(d) / 15f).coerceIn(minAlpha, 0.7f)
         val v = prev + d * alpha
         return if (abs(v) < 0.4f && abs(target) < 0.6f) 0f else v
     }

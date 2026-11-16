@@ -192,3 +192,35 @@ class LensLabelTest {
         assertEquals(24f, LensLabel.equiv35(6f, 9f), 0.01f)
     }
 }
+
+class RollCompensationTest {
+    @Test fun `Frame 90 Grad im Uhrzeigersinn drehen verschiebt Marker von rechts nach unten`() {
+        val w = 41; val h = 41
+        val d = IntArray(w * h)
+        d[20 * w + 40] = 255 // Mitte (20,20) + (20, 0)
+        val g = Gray(w, h, d).rotatedCw(90f)
+        assertEquals(255, g.d[40 * w + 20]) // (20, 20+20)
+    }
+    @Test fun `Punkt drehen und zurueckdrehen ist identisch`() {
+        val (x, y) = FrameRotate.point(0.7f, 0.3f, 160, 120, 33f)
+        val (u, v) = FrameRotate.point(x, y, 160, 120, -33f)
+        assertEquals(0.7f, u, 1e-4f); assertEquals(0.3f, v, 1e-4f)
+    }
+    @Test fun `Tracker bleibt am Objekt wenn das Handy gerollt wird`() {
+        val w = 160; val h = 120
+        val rnd = java.util.Random(11)
+        val world = IntArray(w * h) { rnd.nextInt(256) }
+        // Welt mit Markerblock; "Kamera" sieht die Welt um phi gedreht
+        for (y in 50 until 74) for (x in 70 until 94) world[y * w + x] = rnd.nextInt(256)
+        val tr = ObjectTracker()
+        val start = Gray(w, h, world)
+        tr.start(start, 70f / w, 50f / h, 94f / w, 74f / h)
+        for (phi in listOf(5f, 12f, 20f, 28f)) {
+            val seen = Gray(w, h, world).rotatedCw(-phi)   // Handy gerollt
+            val leveled = seen.rotatedCw(phi)               // Tracker-Ausgleich
+            val res = tr.update(leveled)!!
+            assertTrue("phi=$phi", res.found)
+            assertEquals(82f / w, (res.l + res.r) / 2f, 4f / w)
+        }
+    }
+}

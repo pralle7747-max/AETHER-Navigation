@@ -14,6 +14,9 @@ import kotlin.math.abs
 
 /** Overlay: Wasserwaage (Horizont-Lock), Zielrahmen, Lasso und Warnstreifen am Bildrand. */
 class OverlayView @JvmOverloads constructor(c: Context, a: AttributeSet? = null) : View(c, a) {
+    /** true = liegt auf der (gedrehten) Bühne: nur Zielrahmen + Lasso. false = Bildschirm: Streifen + Wasserwaage. */
+    var stage = false
+
     var showHorizon = false
         set(v) { field = v; invalidate() }
     var tiltDeg = 0f
@@ -40,12 +43,15 @@ class OverlayView @JvmOverloads constructor(c: Context, a: AttributeSet? = null)
     }
 
     override fun onDraw(canvas: Canvas) {
-        drawStrips(canvas)
-        lasso?.let { canvas.drawPath(it, lassoPaint) }
-        target?.let {
-            box.color = if (targetLost) Color.RED else Color.rgb(0, 230, 118)
-            canvas.drawRoundRect(it, 12f, 12f, box)
+        if (stage) {
+            lasso?.let { canvas.drawPath(it, lassoPaint) }
+            target?.let {
+                box.color = if (targetLost) Color.RED else Color.rgb(0, 230, 118)
+                canvas.drawRoundRect(it, 12f, 12f, box)
+            }
+            return
         }
+        drawStrips(canvas)
         if (showHorizon) {
             line.color = if (abs(tiltDeg) < 0.7f) Color.GREEN else Color.YELLOW
             canvas.save()
