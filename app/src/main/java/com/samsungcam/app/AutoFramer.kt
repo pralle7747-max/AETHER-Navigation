@@ -78,10 +78,13 @@ class AutoFramer(
         val (tx, ty) = when {
             !following -> sensorW / 2f to sensorH / 2f
             subject != null -> {
-                if (trackingMode) { // Vorhalt: dorthin zielen, wo das Objekt gleich ist
-                    val leadX = (vx * 150f).coerceIn(-sensorW / zoom * 0.1f, sensorW / zoom * 0.1f)
-                    val leadY = (vy * 150f).coerceIn(-sensorH / zoom * 0.1f, sensorH / zoom * 0.1f)
-                    (subject.cx + leadX) to (subject.cy + leadY)
+                if (trackingMode) {
+                    // Totzone: kleine Bewegungen in der Bildmitte werden nicht nachgeregelt (ruhiges Bild)
+                    val dzX = sensorW / zoom * 0.07f; val dzY = sensorH / zoom * 0.07f
+                    val dx = subject.cx - cx; val dy = subject.cy - cy
+                    val tx0 = if (kotlin.math.abs(dx) <= dzX) cx else subject.cx - dzX * kotlin.math.sign(dx)
+                    val ty0 = if (kotlin.math.abs(dy) <= dzY) cy else subject.cy - dzY * kotlin.math.sign(dy)
+                    tx0 to ty0
                 } else subject.cx to subject.cy
             }
             lost && !trackingMode -> sensorW / 2f to sensorH / 2f
@@ -106,13 +109,21 @@ class AutoFramer(
         )
     }
 
+    /** Aktueller Ausschnitt ohne Seiteneffekte (threadsicher genug für Frame-Zeitstempel). */
+    fun cropNow(): Crop {
+        val z = zoom
+        val halfW = sensorW / z / 2f; val halfH = sensorH / z / 2f
+        val x = cx.coerceIn(halfW, sensorW - halfW); val y = cy.coerceIn(halfH, sensorH - halfH)
+        return Crop((x - halfW).toInt(), (y - halfH).toInt(), min(sensorW, (x + halfW).toInt()), min(sensorH, (y + halfH).toInt()))
+    }
+
     /**
      * Rechnet eine Box aus dem *aufrechten* Analysebild (normiert 0..1, ML-Kit-Koordinaten)
      * in Sensor-Koordinaten um. [rot] = rotationDegrees des ImageProxy (Uhrzeigersinn,
      * um das Sensorbild aufrecht zu machen). Berücksichtigt den aktuellen Ausschnitt.
      */
-    fun subjectFromUpright(l: Float, t: Float, r: Float, b: Float, rot: Int): Box {
-        val c = crop()
+    fun subjectFromUpright(l: Float, t: Float, r: Float, b: Float, rot: Int, at: Crop? = null): Box {
+        val c = at ?: crop()
         val cw = (c.right - c.left).toFloat()
         val ch = (c.bottom - c.top).toFloat()
         var minX = Float.MAX_VALUE; var minY = Float.MAX_VALUE

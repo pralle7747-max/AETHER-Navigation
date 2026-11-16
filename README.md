@@ -8,6 +8,7 @@ Kamera-App für Android (Kotlin, CameraX, ML Kit) mit:
 | **Auto-Zoom** (an/aus) | Zoom wird so geregelt, dass das Motiv ~45 % des Bildes füllt; ohne Motiv zurück auf 1× |
 | Manueller Zoom | Pinch (wirkt, wenn Auto-Zoom aus ist) |
 | **Objekt-Tracking** | Chip „Objekt-Tracking“: Objekt im Live-Bild einkreisen oder antippen (KI-Auswahl). Ausschnitt schwenkt/zoomt mit (mit Vorhalt); geht das Objekt verloren, zoomt die App heraus und sucht es im ganzen Bild |
+| **KI-Tracking** | Zusätzlich zum Vorlagen-Tracker erkennt ein KI-Modell (EfficientDet-Lite0, COCO: Person, Fahrrad, Auto, Motorrad, Boot, Tier …) das Objekt, kennt dessen Klasse und eine stabile ID und ordnet die Auswahl (Kreis/Tippen) zu. Ein Kalman-Filter glättet die Bewegung und überbrückt Lücken zwischen den KI-Bildern; eine Totzone hält das Bild ruhig |
 | **Warnstreifen** | Gelber Streifen am Bildrand, wenn das Objekt dem Rand des gesamten Kamerabilds nahekommt (<12 %), roter bei <4 %; bei Verlust rot rundum |
 | **Video** | Chip „Video“: Aufnahme mit Ton (Movies/SamsungCam2), Tracking/Follow/Auto-Zoom wirken im Video mit |
 | **Linsenwahl** | Die App fragt das Gerät, welche Linsen es Apps freigibt (Ultraweit, Haupt, Tele, Makro, Front), und zeigt sie als Auswahl mit echtem Zoomfaktor und MP. Tracking, Follow, Auflösung und Video laufen mit der gewählten Linse |
@@ -37,7 +38,8 @@ Unit-Tests der Follow/Auto-Zoom-Logik: `./gradlew :app:testDebugUnitTest`.
   Gerät abweichen – ggf. in `MainActivity.applyHorizonToPreview` bzw. `levelHorizon` anpassen.
 - 50/100 MP gibt es nur, wenn Samsung die Auflösung für Drittapps freigibt. Viele A-Modelle haben 50 MP, aber keinen 100-MP-Sensor, dann bleibt 100 MP ausgegraut. Neigungskorrektur bei 50 MP braucht viel Speicher (Fallback: halbe Auflösung).
 - Smart Select lädt beim ersten Mal ein ML-Kit-Modell über Google Play Services (Internet nötig); ohne Modell greift die Farbflächen-Auswahl.
-- Tracking ist ein eigener Vorlagen-Tracker (keine KI): gut bei klar abgegrenzten, texturierten Objekten (RC-Car, Radfahrer), schwächer bei sehr schnellen Bewegungen, Verdeckung oder einfarbigen Objekten. Im Video-Modus ist der Horizont-Lock aus (Video wird nicht gerade gedreht).
+- Das KI-Modell kennt die 80 COCO-Klassen. Spezialobjekte (z. B. ein RC-Car, das nicht als „Auto“ erkannt wird) fallen automatisch auf den Vorlagen-Tracker zurück (Status „Vorlage“). Die APK ist nur für arm64 gebaut.
+- Der Vorlagen-Tracker (Rückfall) ist keine KI: gut bei klar abgegrenzten, texturierten Objekten (RC-Car, Radfahrer), schwächer bei sehr schnellen Bewegungen, Verdeckung oder einfarbigen Objekten. Im Video-Modus ist der Horizont-Lock aus (Video wird nicht gerade gedreht).
 - Der Ausschnitt ist digital (Crop): Schwenken geht nur, wenn herangezoomt ist; deshalb startet das Tracking mit mindestens 1,4× Zoom.
 - Welche Linsen erscheinen, entscheidet Samsung: Nicht jede physische Linse wird Drittapps freigegeben. Der Linsenwechsel ist manuell (kein automatischer Wechsel beim Zoomen). Die Makro-Erkennung ist eine Schätzung („Makro?").
 - Horizont-Lock nutzt den Gyro-gestützten Rotationssensor (fällt auf den Schwerkraftsensor zurück). Vorschau, Zielrahmen und Lasso drehen gemeinsam; der Tracker dreht jeden Frame um den Rollwinkel zurück und bleibt so beim Drehen am Objekt. Die Oberfläche ist weiter auf Hochformat gesperrt: Im Querformat ist die Vorschau seitlich, Fotos werden aber aufrecht gespeichert.

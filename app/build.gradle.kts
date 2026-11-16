@@ -13,12 +13,14 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1"
+        ndk { abiFilters += "arm64-v8a" } // alle aktuellen Samsung-Handys; halbiert die APK-Größe
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    androidResources { noCompress += "tflite" }
 }
 
 dependencies {
@@ -29,6 +31,7 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax")
     implementation("androidx.camera:camera-video:$camerax")
     implementation("com.google.mlkit:face-detection:16.1.6")
+    implementation("com.google.mlkit:object-detection-custom:17.0.2")
     implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.13.1")

@@ -224,3 +224,69 @@ class RollCompensationTest {
         }
     }
 }
+
+class FusionTest {
+    private val sw = 4000; private val sh = 3000
+
+    @Test fun `Kalman glaettet verrauschte Messungen deutlich`() {
+        val f = SubjectFilter(sw, sh)
+        val rnd = java.util.Random(3)
+        f.reset(Box(1900f, 1400f, 2100f, 1600f), 0)
+        var t = 0L; var rawErr = 0.0; var filtErr = 0.0; var n = 0
+        repeat(150) { i ->
+            t += 33
+            val trueCx = 1000f + i * 12f // bewegt sich
+            val noisy = trueCx + (rnd.nextGaussian() * 40).toFloat()
+            f.predict(t)
+            f.update(Box(noisy - 100f, 1400f, noisy + 100f, 1600f), 0.02)
+            if (i > 30) { rawErr += Math.abs(noisy - trueCx); filtErr += Math.abs(f.box().cx - trueCx); n++ }
+        }
+        assertTrue("gefiltert ${filtErr / n} < roh ${rawErr / n}", filtErr / n < 0.7 * rawErr / n)
+    }
+
+    @Test fun `Filter ueberbrueckt Luecken und folgt der Bewegung`() {
+        val f = SubjectFilter(sw, sh)
+        f.reset(Box(900f, 1400f, 1100f, 1600f), 0)
+        var t = 0L
+        repeat(60) { i -> t += 33; f.predict(t); f.update(Box(900f + i * 15f, 1400f, 1100f + i * 15f, 1600f), 0.01) }
+        val last = f.box().cx
+        repeat(6) { t += 33; f.predict(t) } // 200 ms ohne Messung
+        assertTrue(f.box().cx > last + 20f)
+    }
+
+    @Test fun `Auswahl wird von der KI zugeordnet und Klasse uebernommen`() {
+        val fu = TargetFusion(sw, sh)
+        fu.begin(Box(1900f, 1400f, 2100f, 1600f), 0)
+        fu.onDetections(listOf(
+            Det(7, "car", Box(1850f, 1380f, 2150f, 1650f)),
+            Det(8, "person", Box(300f, 300f, 700f, 1200f))), 100)
+        assertEquals(TargetFusion.Mode.AI, fu.mode)
+        assertEquals("car", fu.label)
+        assertEquals("Auto", Labels.german(fu.label))
+    }
+
+    @Test fun `Tippen ordnet die kleinste Erkennung unter dem Finger zu`() {
+        val fu = TargetFusion(sw, sh)
+        fu.begin(Box(1990f, 1490f, 2010f, 1510f), 0) // winzige Auswahl
+        fu.onDetections(listOf(
+            Det(1, "person", Box(1000f, 500f, 3000f, 2900f)),
+            Det(2, "bicycle", Box(1800f, 1300f, 2300f, 1900f))), 100)
+        assertEquals("bicycle", fu.label)
+    }
+
+    @Test fun `ID Wechsel wird ueber Ueberlappung und Klasse wieder zugeordnet`() {
+        val fu = TargetFusion(sw, sh)
+        fu.begin(Box(1900f, 1400f, 2100f, 1600f), 0)
+        fu.onDetections(listOf(Det(5, "car", Box(1880f, 1380f, 2120f, 1620f))), 50)
+        fu.onDetections(listOf(Det(9, "car", Box(1890f, 1390f, 2130f, 1630f))), 100) // neue ID
+        assertEquals(TargetFusion.Mode.AI, fu.mode)
+        assertTrue(!fu.isLost(150))
+    }
+
+    @Test fun `ohne Messungen gilt das Objekt nach 600 ms als verloren`() {
+        val fu = TargetFusion(sw, sh)
+        fu.begin(Box(1900f, 1400f, 2100f, 1600f), 0)
+        assertTrue(fu.current(300) != null)
+        assertTrue(fu.current(900) == null)
+    }
+}

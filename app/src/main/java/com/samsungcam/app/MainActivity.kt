@@ -59,6 +59,10 @@ import com.google.android.material.chip.ChipGroup
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.common.model.LocalModel
+import com.google.mlkit.vision.objects.DetectedObject
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import java.util.concurrent.Executors
@@ -106,6 +110,26 @@ class MainActivity : AppCompatActivity() {
     @Volatile private var lastFw = 640
     @Volatile private var lastFh = 480
     private val lasso = Path()
+    private var fusion: TargetFusion? = null
+    private val detBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var aiOk = true
+    /** KI-Objekterkennung (EfficientDet-Lite0, COCO-Klassen) mit stabilen Tracking-IDs. */
+    private val aiDetector by lazy {
+        try {
+            ObjectDetection.getClient(
+                CustomObjectDetectorOptions.Builder(
+                    LocalModel.Builder().setAssetFilePath("efficientdet_lite0.tflite").build()
+                )
+                    .setDetectorMode(CustomObjectDetectorOptions.STREAM_MODE)
+                    .enableMultipleObjects()
+                    .enableClassification()
+                    .setClassificationConfidenceThreshold(0.35f)
+                    .setMaxPerObjectLabelCount(1)
+                    .build()
+            )
+        } catch (e: Exception) { Log.w(TAG, "KI-Detektor nicht verfügbar", e); null }
+    }
+    private fun fusionFor(f: AutoFramer) = fusion ?: TargetFusion(f.sensorW, f.sensorH).also { fusion = it }
     private var lassoDown = false
     private val segmenter by lazy {
         SubjectSegmentation.getClient(
@@ -237,7 +261,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); horizon.start() }
     override fun onPause() { horizon.stop(); super.onPause() }
     override fun onDestroy() {
-        recording?.stop(); detector.close(); analysisExecutor.shutdown(); saveExecutor.shutdown(); super.onDestroy()
+        recording?.stop(); aiDetector?.close(); detector.close(); analysisExecutor.shutdown(); saveExecutor.shutdown(); super.onDestroy()
     }
 
     private fun chipFor(mp: Int) = when (mp) { 50 -> R.id.chip50; 100 -> R.id.chip100; else -> R.id.chip12 }
@@ -312,6 +336,7 @@ class MainActivity : AppCompatActivity() {
         isFront = lens.front
         currentSelector = selectorFor(id)
         framer = null          // anderer Sensor -> neue Größe
+        fusion = null
         lastCrop = null
         detectTiers()
         bindUseCases()
@@ -432,12 +457,30 @@ class MainActivity : AppCompatActivity() {
 
     // ---------------- Objekt-Tracking ----------------
 
-    /** Analyse-Thread: Frame -> Tracker -> Ausschnitt + Warnungen (Main-Thread). */
+    /** Analyse-Thread: Frame -> Vorlagen-Tracker (jedes Bild) + KI-Detektor (asynchron, ~10–15×/s). */
     private fun trackFrame(proxy: ImageProxy, f: AutoFramer) {
         val plane = proxy.planes[0]
         val raw = Gray.fromY(plane.buffer, proxy.width, proxy.height, plane.rowStride)
         val rot = proxy.imageInfo.rotationDegrees
+        val crop = f.cropNow() // Ausschnitt zum Zeitpunkt dieses Frames
+        val now = SystemClock.uptimeMillis()
+
+        // KI-Erkennung: erkennt, WAS das Objekt ist, und liefert stabile IDs. Läuft nebenher.
+        val det = aiDetector
+        if (det != null && aiOk && fusionFor(f).active && detBusy.compareAndSet(false, true)) {
+            try {
+                val upW = if (rot % 180 == 0) proxy.width else proxy.height
+                val upH = if (rot % 180 == 0) proxy.height else proxy.width
+                val bmp = proxy.toBitmap()
+                det.process(InputImage.fromBitmap(bmp, rot))
+                    .addOnSuccessListener(ContextCompat.getMainExecutor(this)) { objs ->
+                        detBusy.set(false); onDetections(objs, rot, upW, upH, crop, f)
+                    }
+                    .addOnFailureListener { e -> detBusy.set(false); aiOk = false; Log.w(TAG, "KI-Erkennung fehlgeschlagen", e) }
+            } catch (e: Exception) { detBusy.set(false); aiOk = false; Log.w(TAG, "KI-Erkennung nicht möglich", e) }
+        }
         proxy.close()
+
         // Frame um den Rollwinkel des Handys zurückdrehen: Das Objekt sieht für den Tracker immer gleich
         // aus, auch wenn man das Handy dreht. (Frontkamera-Bild ist ungespiegelt -> Gegenrichtung.)
         val phi = horizon.rollDeg * (if (isFront) -1f else 1f)
@@ -453,35 +496,70 @@ class MainActivity : AppCompatActivity() {
             val b = FrameRotate.box(it.l, it.t, it.r, it.b, raw.w, raw.h, -phi)
             TrackResult(b[0], b[1], b[2], b[3], it.found)
         }
-        runOnUiThread { onTrackResult(res, rot, f) }
+        runOnUiThread { onTrackResult(res, rot, crop, f, now) }
     }
 
-    private fun onTrackResult(res: TrackResult?, rot: Int, f: AutoFramer) {
-        if (res == null) return
-        f.trackingMode = true
-        val subject = if (res.found) f.subjectFromUpright(res.l, res.t, res.r, res.b, 0) else null
-        applyCrop(f.update(subject, SystemClock.uptimeMillis()))
-
-        // Zielrahmen auf dem Bildschirm
-        val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
-        val pts = listOf(res.l to res.t, res.r to res.t, res.l to res.b, res.r to res.b).map { (x, y) ->
-            val (u0, v) = ViewMap.frameToUpright(x, y, rot)
-            val u = if (isFront) 1f - u0 else u0 // Selfie-Vorschau ist gespiegelt
-            ViewMap.uprightToView(u, v, stageOverlay.width.toFloat(), stageOverlay.height.toFloat(), uw, uh)
+    /** Main-Thread: KI-Ergebnisse (für einen etwas älteren Frame) in die Fusion geben. */
+    private fun onDetections(objs: List<DetectedObject>, rot: Int, upW: Int, upH: Int, crop: Crop, f: AutoFramer) {
+        val fu = fusionFor(f)
+        if (!fu.active) return
+        val dets = objs.map { o ->
+            val bb = o.boundingBox
+            Det(
+                o.trackingId, o.labels.maxByOrNull { it.confidence }?.text,
+                f.subjectFromUpright(
+                    bb.left / upW.toFloat(), bb.top / upH.toFloat(),
+                    bb.right / upW.toFloat(), bb.bottom / upH.toFloat(), rot, crop
+                )
+            )
         }
-        stageOverlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
-        stageOverlay.targetLost = tracker.isLost
+        fu.onDetections(dets, SystemClock.uptimeMillis())
+        fu.takeReseed()?.let { b -> // Vorlage am KI-Ergebnis neu ausrichten (verhindert Abdriften)
+            val c = f.cropNow()
+            val cw = (c.right - c.left).toFloat(); val ch = (c.bottom - c.top).toFloat()
+            val r = RectF(
+                ((b.l - c.left) / cw).coerceIn(0f, 1f), ((b.t - c.top) / ch).coerceIn(0f, 1f),
+                ((b.r - c.left) / cw).coerceIn(0f, 1f), ((b.b - c.top) / ch).coerceIn(0f, 1f))
+            if (r.width() > 0.02f && r.height() > 0.02f) pendingSelection.set(r)
+        }
+    }
+
+    private fun onTrackResult(res: TrackResult?, rot: Int, crop: Crop, f: AutoFramer, now: Long) {
+        val fu = fusionFor(f)
+        if (!fu.active) return
+        if (res != null && res.found)
+            fu.onTemplate(f.subjectFromUpright(res.l, res.t, res.r, res.b, 0, crop), now)
+        f.trackingMode = true
+        val subject = fu.current(now) // geglättet (Kalman), überbrückt Lücken
+        applyCrop(f.update(subject, now))
+
+        // Zielrahmen auf dem Bildschirm (aus der geglätteten Box, im aktuellen Ausschnitt)
+        val shown = subject ?: fu.lastKnown()
+        if (shown != null) {
+            val c = f.cropNow()
+            val cw = (c.right - c.left).toFloat(); val ch = (c.bottom - c.top).toFloat()
+            val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
+            val corners = listOf(shown.l to shown.t, shown.r to shown.t, shown.l to shown.b, shown.r to shown.b)
+            val pts = corners.map { (sx, sy) ->
+                val (u0, v) = ViewMap.frameToUpright((sx - c.left) / cw, (sy - c.top) / ch, rot)
+                val u = if (isFront) 1f - u0 else u0 // Selfie-Vorschau ist gespiegelt
+                ViewMap.uprightToView(u, v, stageOverlay.width.toFloat(), stageOverlay.height.toFloat(), uw, uh)
+            }
+            stageOverlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
+        }
+        val lost = fu.isLost(now)
+        stageOverlay.targetLost = lost
 
         // Warnstreifen: wie nah ist das Objekt am Rand des GESAMTEN Kamerabilds?
-        val last = lastSubjectBox ?: subject
         if (subject != null) lastSubjectBox = subject
-        overlay.warn = (subject ?: last)?.let {
+        overlay.warn = (subject ?: lastSubjectBox)?.let {
             EdgeWarning.toUpright(EdgeWarning.levels(it, f.sensorW, f.sensorH), rot).let { w ->
                 if (isFront) intArrayOf(w[2], w[1], w[0], w[3]) else w
             }
         } ?: IntArray(4)
 
-        statusLabel.text = if (tracker.isLost) "Objekt verloren – suche …" else "Verfolge Objekt"
+        statusLabel.text = if (lost) "Objekt verloren – suche …"
+            else "${Labels.german(fu.label)} · " + if (fu.mode == TargetFusion.Mode.AI) "KI-Erkennung" else "Vorlage"
         statusLabel.visibility = android.view.View.VISIBLE
     }
     private var lastSubjectBox: Box? = null
@@ -491,7 +569,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopTracking() {
-        tracker.clear(); pendingSelection.set(null)
+        tracker.clear(); pendingSelection.set(null); fusion?.clear()
         framer?.trackingMode = false
         lastSubjectBox = null
         stageOverlay.target = null; overlay.warn = IntArray(4); stageOverlay.targetLost = false; stageOverlay.lasso = null
@@ -548,9 +626,13 @@ class MainActivity : AppCompatActivity() {
             val u = if (isFront) 1f - u0 else u0
             ViewMap.uprightToFrame(u.coerceIn(0f, 1f), v.coerceIn(0f, 1f), rot)
         }
-        pendingSelection.set(RectF(
-            frame.minOf { it.first }, frame.minOf { it.second }, frame.maxOf { it.first }, frame.maxOf { it.second }))
-        showStatus("Verfolge Objekt")
+        val rect = RectF(
+            frame.minOf { it.first }, frame.minOf { it.second }, frame.maxOf { it.first }, frame.maxOf { it.second })
+        framer?.let { f -> // Auswahl in Sensor-Koordinaten für die Fusion (KI ordnet ihr dann das Objekt zu)
+            fusionFor(f).begin(f.subjectFromUpright(rect.left, rect.top, rect.right, rect.bottom, 0), SystemClock.uptimeMillis())
+        }
+        pendingSelection.set(rect)
+        showStatus("Suche Objekt …")
     }
 
     // ---------------- Video ----------------
