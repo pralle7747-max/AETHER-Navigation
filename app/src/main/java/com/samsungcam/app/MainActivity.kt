@@ -33,6 +33,7 @@ import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
+import androidx.camera.core.CameraFilter
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -87,6 +88,11 @@ class MainActivity : AppCompatActivity() {
     private var selectedMp = 12
     private lateinit var resGroup: ChipGroup
     private lateinit var chipTrack: Chip
+    private lateinit var lensGroup: ChipGroup
+    private var lenses = listOf<Lens>()
+    private var currentSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var currentLensId: String? = null
+    private var isFront = false
     private lateinit var chipVideo: Chip
     private lateinit var statusLabel: TextView
     private lateinit var btnShutter: android.widget.Button
@@ -144,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         chipHorizon = findViewById(R.id.chipHorizon)
         resGroup = findViewById(R.id.resGroup)
         chipTrack = findViewById(R.id.chipTrack)
+        lensGroup = findViewById(R.id.lensGroup)
         chipVideo = findViewById(R.id.chipVideo)
         statusLabel = findViewById(R.id.statusLabel)
         btnShutter = findViewById(R.id.btnShutter)
@@ -233,15 +240,81 @@ class MainActivity : AppCompatActivity() {
         val future = ProcessCameraProvider.getInstance(this)
         future.addListener({
             provider = future.get()
+            detectLenses()
             detectTiers()
             bindUseCases()
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun selectorFor(id: String) = CameraSelector.Builder()
+        .addCameraFilter(CameraFilter { infos -> infos.filter { Camera2CameraInfo.from(it).cameraId == id } })
+        .build()
+
+    /** Fragt das Gerät, welche Linsen es Apps wirklich anbietet (Haupt, Ultraweit, Tele, Makro, Front). */
+    private fun detectLenses() {
+        val p = provider ?: return
+        val infos = p.availableCameraInfos
+        fun keyOf(i: androidx.camera.core.CameraInfo) = Camera2CameraInfo.from(i)
+        val mainInfo = CameraSelector.DEFAULT_BACK_CAMERA.filter(infos).firstOrNull()
+        val mainEquiv = mainInfo?.let { m ->
+            val c = keyOf(m)
+            val f = c.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull()
+            val w = c.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width
+            if (f != null && w != null) LensLabel.equiv35(f, w) else null
+        }
+        lenses = infos.mapNotNull { i ->
+            val c = keyOf(i)
+            val facing = c.getCameraCharacteristic(CameraCharacteristics.LENS_FACING) ?: return@mapNotNull null
+            if (facing == CameraCharacteristics.LENS_FACING_EXTERNAL) return@mapNotNull null
+            val front = facing == CameraCharacteristics.LENS_FACING_FRONT
+            val f = c.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull()
+            val w = c.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width
+            val arr = c.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+            val mp = if (arr != null) arr.width() * arr.height() / 1_000_000f else 0f
+            val rel = if (f != null && w != null && mainEquiv != null) LensLabel.equiv35(f, w) / mainEquiv else 1f
+            Lens(c.cameraId, front, rel, mp, LensLabel.of(front, rel, mp))
+        }.sortedWith(compareBy({ it.front }, { it.rel }))
+
+        lensGroup.removeAllViews()
+        val mainId = mainInfo?.let { keyOf(it).cameraId }
+        for (l in lenses) {
+            val chip = Chip(this).apply {
+                id = android.view.View.generateViewId()
+                text = "${l.label} · ${"%.0f".format(l.megapixels)} MP"
+                isCheckable = true
+                tag = l.id
+                isChecked = l.id == mainId
+            }
+            lensGroup.addView(chip)
+        }
+        currentLensId = mainId
+        lensGroup.setOnCheckedStateChangeListener { group, ids ->
+            val chip = ids.firstOrNull()?.let { group.findViewById<Chip>(it) } ?: return@setOnCheckedStateChangeListener
+            switchLens(chip.tag as String)
+        }
+        if (lenses.count { !it.front } < 2)
+            Toast.makeText(this, "Samsung gibt auf diesem Handy nur ${lenses.count { !it.front }} Rückkamera für Apps frei.", Toast.LENGTH_LONG).show()
+        Log.i(TAG, "Linsen: " + lenses.joinToString { "${it.id}=${it.label}(${it.megapixels}MP)" })
+    }
+
+    private fun switchLens(id: String) {
+        if (id == currentLensId) return
+        val lens = lenses.firstOrNull { it.id == id } ?: return
+        stopTracking(); chipTrack.isChecked = false
+        recording?.stop(); recording = null
+        currentLensId = id
+        isFront = lens.front
+        currentSelector = selectorFor(id)
+        framer = null          // anderer Sensor -> neue Größe
+        lastCrop = null
+        detectTiers()
+        bindUseCases()
+    }
+
     /** Fragt das Gerät, welche JPEG-Größen es Apps wirklich anbietet, und ordnet sie 12/50/100 MP zu. */
     private fun detectTiers() {
         val p = provider ?: return
-        val info = CameraSelector.DEFAULT_BACK_CAMERA.filter(p.availableCameraInfos).firstOrNull() ?: return
+        val info = currentSelector.filter(p.availableCameraInfos).firstOrNull() ?: return
         val map = Camera2CameraInfo.from(info)
             .getCameraCharacteristic(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP) ?: return
         val all = (map.getOutputSizes(ImageFormat.JPEG)?.toList().orEmpty() +
@@ -289,11 +362,11 @@ class MainActivity : AppCompatActivity() {
                 val vc = VideoCapture.withOutput(recorder)
                 videoCapture = vc
                 imageCapture = null
-                p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, vc, analysis)
+                p.bindToLifecycle(this, currentSelector, preview, vc, analysis)
             } else {
                 videoCapture = null
                 imageCapture = capture
-                p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture, analysis)
+                p.bindToLifecycle(this, currentSelector, preview, capture, analysis)
             }
             camera = cam
             lastCrop = null
@@ -374,7 +447,8 @@ class MainActivity : AppCompatActivity() {
         // Zielrahmen auf dem Bildschirm
         val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
         val pts = listOf(res.l to res.t, res.r to res.t, res.l to res.b, res.r to res.b).map { (x, y) ->
-            val (u, v) = ViewMap.frameToUpright(x, y, rot)
+            val (u0, v) = ViewMap.frameToUpright(x, y, rot)
+            val u = if (isFront) 1f - u0 else u0 // Selfie-Vorschau ist gespiegelt
             ViewMap.uprightToView(u, v, overlay.width.toFloat(), overlay.height.toFloat(), uw, uh)
         }
         overlay.target = RectF(pts.minOf { it.first }, pts.minOf { it.second }, pts.maxOf { it.first }, pts.maxOf { it.second })
@@ -384,7 +458,9 @@ class MainActivity : AppCompatActivity() {
         val last = lastSubjectBox ?: subject
         if (subject != null) lastSubjectBox = subject
         overlay.warn = (subject ?: last)?.let {
-            EdgeWarning.toUpright(EdgeWarning.levels(it, f.sensorW, f.sensorH), rot)
+            EdgeWarning.toUpright(EdgeWarning.levels(it, f.sensorW, f.sensorH), rot).let { w ->
+                if (isFront) intArrayOf(w[2], w[1], w[0], w[3]) else w
+            }
         } ?: IntArray(4)
 
         statusLabel.text = if (tracker.isLost) "Objekt verloren – suche …" else "Verfolge Objekt"
@@ -450,7 +526,8 @@ class MainActivity : AppCompatActivity() {
         val rot = lastRot
         val (uw, uh) = if (rot % 180 == 0) lastFw.toFloat() to lastFh.toFloat() else lastFh.toFloat() to lastFw.toFloat()
         val frame = listOf(r.left to r.top, r.right to r.top, r.left to r.bottom, r.right to r.bottom).map { (x, y) ->
-            val (u, v) = ViewMap.viewToUpright(x, y, previewView.width.toFloat(), previewView.height.toFloat(), uw, uh)
+            val (u0, v) = ViewMap.viewToUpright(x, y, previewView.width.toFloat(), previewView.height.toFloat(), uw, uh)
+            val u = if (isFront) 1f - u0 else u0
             ViewMap.uprightToFrame(u.coerceIn(0f, 1f), v.coerceIn(0f, 1f), rot)
         }
         pendingSelection.set(RectF(

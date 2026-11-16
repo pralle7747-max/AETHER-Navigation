@@ -10,6 +10,7 @@ Kamera-App für Android (Kotlin, CameraX, ML Kit) mit:
 | **Objekt-Tracking** | Chip „Objekt-Tracking“: Objekt im Live-Bild einkreisen oder antippen (KI-Auswahl). Ausschnitt schwenkt/zoomt mit (mit Vorhalt); geht das Objekt verloren, zoomt die App heraus und sucht es im ganzen Bild |
 | **Warnstreifen** | Gelber Streifen am Bildrand, wenn das Objekt dem Rand des gesamten Kamerabilds nahekommt (<12 %), roter bei <4 %; bei Verlust rot rundum |
 | **Video** | Chip „Video“: Aufnahme mit Ton (Movies/SamsungCam2), Tracking/Follow/Auto-Zoom wirken im Video mit |
+| **Linsenwahl** | Die App fragt das Gerät, welche Linsen es Apps freigibt (Ultraweit, Haupt, Tele, Makro, Front), und zeigt sie als Auswahl mit echtem Zoomfaktor und MP. Tracking, Follow, Auflösung und Video laufen mit der gewählten Linse |
 | **Auflösung 12 / 50 / 100 MP** | Die App fragt das Gerät, welche JPEG-Größen es Apps anbietet; nicht verfügbare Stufen sind ausgegraut und melden das |
 | **Horizont-Lock** (an/aus) | Gravitationssensor mit adaptiver Glättung, rastet bei 0° ein (+ Vibrationstick), Querformat wird erkannt und aufrecht gespeichert, Wasserwaage im Bild |
 | **Galerie** | Alle Fotos des Geräts als Raster, Antippen öffnet den Editor |
@@ -38,6 +39,7 @@ Unit-Tests der Follow/Auto-Zoom-Logik: `./gradlew :app:testDebugUnitTest`.
 - Smart Select lädt beim ersten Mal ein ML-Kit-Modell über Google Play Services (Internet nötig); ohne Modell greift die Farbflächen-Auswahl.
 - Tracking ist ein eigener Vorlagen-Tracker (keine KI): gut bei klar abgegrenzten, texturierten Objekten (RC-Car, Radfahrer), schwächer bei sehr schnellen Bewegungen, Verdeckung oder einfarbigen Objekten. Im Video-Modus ist der Horizont-Lock aus (Video wird nicht gerade gedreht).
 - Der Ausschnitt ist digital (Crop): Schwenken geht nur, wenn herangezoomt ist; deshalb startet das Tracking mit mindestens 1,4× Zoom.
+- Welche Linsen erscheinen, entscheidet Samsung: Nicht jede physische Linse wird Drittapps freigegeben. Der Linsenwechsel ist manuell (kein automatischer Wechsel beim Zoomen). Die Makro-Erkennung ist eine Schätzung („Makro?").
 - Follow/Auto-Zoom erkennen Gesichter (Personen). Andere Objekte: ML Kit Object Detection ergänzen.
 - Der Radierer funktioniert für kleine Objekte; für große Flächen ein ML-Modell (z. B. LaMa/TFLite) einbauen.
 - Eine Samsung-eigene Kamera-App (One UI) lässt sich so nicht ersetzen; das hier ist eine eigenständige App.

@@ -179,3 +179,16 @@ class ObjectTrackerTest {
         assertEquals(100 / w.toFloat(), res.l, 3f / w)
     }
 }
+
+class LensLabelTest {
+    @Test fun `A56 typische Linsen werden richtig benannt`() {
+        assertEquals("0,5× Ultraweit", LensLabel.of(false, 0.54f, 12f))
+        assertEquals("1× Haupt", LensLabel.of(false, 1f, 50f))
+        assertEquals("Makro?", LensLabel.of(false, 1f, 5f))
+        assertEquals("Front", LensLabel.of(true, 1f, 12f))
+        assertEquals("3× Tele", LensLabel.of(false, 3f, 10f))
+    }
+    @Test fun `Kleinbild Aequivalent`() {
+        assertEquals(24f, LensLabel.equiv35(6f, 9f), 0.01f)
+    }
+}
