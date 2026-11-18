@@ -1,156 +1,421 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Navigation</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700;900&display=swap">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
-html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0f172a}
-#map{position:fixed;inset:0;z-index:0}
-#ui{position:fixed;top:0;left:0;right:0;z-index:1000;pointer-events:none}
-#ui>*{pointer-events:auto}
-#panel{position:fixed;bottom:0;left:0;right:0;z-index:1000;max-height:45vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s ease}
-#panel.open{transform:translateY(0)}
-.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
-#suggestions:empty{display:none}
+/* Leaflet 1.9.4 — inlined */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden}.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none}.leaflet-tile::selection{background:transparent}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0}.leaflet-marker-icon,.leaflet-marker-shadow{display:block}.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer,.leaflet-container .leaflet-tile{max-width:none!important;max-height:none!important;width:auto;padding:0}.leaflet-container img.leaflet-tile{mix-blend-mode:plus-lighter}.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y}.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:none;touch-action:pinch-zoom}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{-ms-touch-action:none;touch-action:none}.leaflet-container{-webkit-tap-highlight-color:transparent}.leaflet-container a{-webkit-tap-highlight-color:rgba(51,181,229,.4)}.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}.leaflet-zoom-box{width:0;height:0;box-sizing:border-box;z-index:800}.leaflet-overlay-pane svg{-moz-user-select:none}.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}.leaflet-vml-shape{width:1px;height:1px}.lvml{behavior:url(#default#VML);display:inline-block;position:absolute}.leaflet-control{position:relative;z-index:800;pointer-events:visiblePainted;pointer-events:auto}.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-control{float:left;clear:both}.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity .2s linear;transition:opacity .2s linear}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1}.leaflet-zoom-animated{-webkit-transform-origin:0 0;-ms-transform-origin:0 0;transform-origin:0 0}svg.leaflet-zoom-animated{will-change:transform}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform .25s cubic-bezier(0,0,.25,1);transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{-webkit-transition:none;transition:none}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:-webkit-grab;cursor:grab}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair}.leaflet-popup-pane,.leaflet-control{cursor:auto}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable{cursor:move;cursor:-webkit-grabbing;cursor:grabbing}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-image-layer,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}.leaflet-marker-icon.leaflet-interactive,.leaflet-image-layer.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path{pointer-events:visiblePainted;pointer-events:auto}.leaflet-container{background:#ddd;outline-offset:1px}.leaflet-container a{color:#0078a8}.leaflet-zoom-box{border:2px dotted #38f;background:rgba(255,255,255,.5)}.leaflet-container{font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.65);border-radius:4px}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:#000}.leaflet-bar a,.leaflet-control-layers-toggle{background-position:50% 50%;background-repeat:no-repeat;display:block}.leaflet-bar a:hover,.leaflet-bar a:focus{background-color:#f4f4f4}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px "Lucida Console",Monaco,monospace;text-indent:1px}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,.4);background:#fff;border-radius:5px}.leaflet-control-layers-toggle{width:36px;height:36px}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff}.leaflet-control-layers-scrollbar{overflow-y:scroll;overflow-x:hidden;padding-right:5px}.leaflet-control-layers-selector{margin-top:2px;position:relative;top:1px}.leaflet-control-layers label{display:block;font-size:13px}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px}.leaflet-container .leaflet-control-attribution{background:rgba(255,255,255,.8);margin:0}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4}.leaflet-control-attribution a{text-decoration:none}.leaflet-left .leaflet-control-scale{margin-left:5px}.leaflet-bottom .leaflet-control-scale{margin-bottom:5px}.leaflet-control-scale-line{border:2px solid #777;border-top:none;line-height:1.1;padding:2px 5px 1px;white-space:nowrap;box-sizing:border-box;background:rgba(255,255,255,.8)}.leaflet-control-scale-line:not(:first-child){border-top:2px solid #777;border-bottom:none;margin-top:-2px}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px;min-height:1px}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;transform:rotate(45deg)}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff;color:#333;box-shadow:0 3px 14px rgba(0,0,0,.4)}.leaflet-container a.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:transparent}.leaflet-div-icon{background:#fff;border:1px solid #666}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.4)}.leaflet-tooltip.leaflet-interactive{cursor:pointer;pointer-events:auto}
+
+/* == OLED Navigation == */
+:root {
+  --bg:    #000000;
+  --s1:    #0d0d0d;
+  --s2:    #131313;
+  --s3:    #1c1c1c;
+  --ac:    #00A8FF;
+  --acg:   rgba(0,168,255,.18);
+  --fg:    #ffffff;
+  --fg2:   rgba(255,255,255,.58);
+  --fg3:   rgba(255,255,255,.28);
+  --brd:   rgba(255,255,255,.07);
+  --grn:   #00E676;
+  --amb:   #FFB300;
+  --red:   #FF3B5C;
+  color-scheme: dark;
+}
+
+@keyframes pulse-blue {
+  0%   { box-shadow: 0 0 0 0 rgba(0,168,255,.7); }
+  70%  { box-shadow: 0 0 0 9px rgba(0,168,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,168,255,0); }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, sans-serif; }
+
+#map { position: fixed; inset: 0; z-index: 0; }
+.leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
+
+/* ── TOP ── */
+#top {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-bottom: 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.97) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.srow { display: flex; gap: 8px; align-items: center; }
+
+#q {
+  flex: 1; min-width: 0;
+  background: var(--s2);
+  color: var(--fg);
+  border: 1px solid var(--brd);
+  border-radius: 15px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s;
+}
+#q::placeholder { color: var(--fg3); }
+#q:focus { border-color: var(--ac); box-shadow: 0 0 0 1px var(--ac); }
+
+.sqb {
+  width: 48px; height: 48px; flex-shrink: 0;
+  background: var(--s2);
+  color: var(--fg2);
+  border: 1px solid var(--brd);
+  border-radius: 15px;
+  cursor: pointer; font-size: 19px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s;
+}
+.sqb:active { background: var(--s3); }
+
+#drop {
+  background: var(--s1);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  overflow: hidden;
+}
+#drop:empty { display: none; }
+.di { padding: 11px 15px; cursor: pointer; border-bottom: 1px solid var(--brd); }
+.di:last-child { border-bottom: none; }
+.di:active { background: var(--s3); }
+.dn { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds { font-size: 11px; color: var(--fg3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+
+/* ── TABS ── */
+#tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+.tab {
+  background: var(--s2);
+  border: 1.5px solid var(--brd);
+  border-radius: 15px;
+  padding: 11px 6px 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: background .12s, border-color .12s;
+  font-family: inherit;
+  color: var(--fg2);
+}
+.tab-ic { font-size: 24px; line-height: 1; }
+.tab-lb { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.tab.on {
+  background: var(--acg);
+  border-color: var(--ac);
+  color: var(--ac);
+}
+#tab-train.on { border-color: var(--amb); color: var(--amb); background: rgba(255,179,0,.12); }
+
+/* ── BOTTOM PANEL ── */
+#bot {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: var(--bg);
+  border-top: 1px solid var(--brd);
+  padding-top: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  display: flex; flex-direction: column; gap: 12px;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+#bot.open { transform: translateY(0); }
+
+/* Speed */
+#spd-wrap {
+  display: none;
+  align-items: baseline; justify-content: center; gap: 6px;
+  padding: 6px 0;
+}
+#spd-wrap.show { display: flex; }
+#spd {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 72px;
+  color: var(--ac);
+  line-height: 1;
+  text-shadow: 0 0 24px rgba(0,168,255,.55), 0 0 48px rgba(0,168,255,.25);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.spd-u {
+  font-family: 'Orbitron', monospace;
+  font-size: 17px; font-weight: 700;
+  color: var(--fg2); letter-spacing: .12em;
+  align-self: flex-end; margin-bottom: 10px;
+}
+
+/* Maneuver row */
+#man {
+  display: flex; align-items: center; gap: 13px;
+}
+#arrow {
+  width: 58px; height: 58px; flex-shrink: 0;
+  background: var(--acg);
+  border: 1.5px solid var(--ac);
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  box-shadow: inset 0 0 12px rgba(0,168,255,.1);
+}
+#man-info { flex: 1; min-width: 0; }
+#man-dist {
+  font-size: 21px; font-weight: 700;
+  color: var(--ac); font-variant-numeric: tabular-nums;
+}
+#man-street {
+  font-size: 13px; color: var(--fg2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-top: 2px;
+}
+#rsums { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+#rdist { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#rtime { font-size: 13px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+
+/* Start/Stop */
+#ss {
+  width: 100%; padding: 15px;
+  background: var(--ac);
+  color: #000; border: none;
+  border-radius: 15px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px; font-weight: 800;
+  letter-spacing: .09em; text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity .15s, background .15s;
+  box-shadow: 0 0 20px rgba(0,168,255,.35);
+}
+#ss.stop { background: var(--red); color: #fff; box-shadow: 0 0 20px rgba(255,59,92,.35); }
+#ss:active { opacity: .82; }
 </style>
-</head>
-<body>
+
 <div id="map"></div>
 
-<div id="ui" class="p-3 space-y-2">
-  <div class="flex gap-2">
-    <div class="relative flex-1">
-      <input id="q" type="search" autocomplete="off" placeholder="Ziel suchen…"
-        class="w-full bg-gray-900/90 text-white px-4 py-3 rounded-2xl text-base outline-none border border-gray-700 placeholder-gray-500 backdrop-blur"/>
-      <div id="suggestions" class="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-xl z-50"></div>
-    </div>
-    <button onclick="doSearch()" class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 px-4 rounded-2xl font-bold text-lg transition-colors">🔍</button>
+<div id="top">
+  <div class="srow">
+    <input id="q" type="search" autocomplete="off" placeholder="Ziel eingeben…">
+    <button class="sqb" onclick="clearDest()" title="Löschen">✕</button>
+    <button class="sqb" onclick="center()" title="Standort">◎</button>
   </div>
-
-  <div class="flex gap-2">
-    <button id="btnFoot" onclick="setMode('foot')"
-      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white transition-colors">🚶 Fuß</button>
-    <button id="btnCar" onclick="setMode('car')"
-      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 transition-colors">🚗 Auto</button>
-    <button onclick="center()"
-      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 active:bg-gray-700 transition-colors">📍 Ich</button>
-    <button onclick="togglePanel()"
-      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 active:bg-gray-700 transition-colors" id="btnPanel">≡ Route</button>
+  <div id="drop"></div>
+  <div id="tabs">
+    <button class="tab on" id="tab-foot" data-m="foot" onclick="setMode('foot')">
+      <span class="tab-ic">🚶</span><span class="tab-lb">Fuß</span>
+    </button>
+    <button class="tab" id="tab-train" data-m="train" onclick="setMode('train')">
+      <span class="tab-ic">🚆</span><span class="tab-lb">Bahn</span>
+    </button>
+    <button class="tab" id="tab-car" data-m="car" onclick="setMode('car')">
+      <span class="tab-ic">🚗</span><span class="tab-lb">Auto</span>
+    </button>
   </div>
 </div>
 
-<div id="panel" class="bg-gray-950 border-t border-gray-800">
-  <div class="sticky top-0 bg-gray-950 p-3 pb-0">
-    <div id="routeInfo" class="text-center text-sm text-gray-400 pb-2 border-b border-gray-800"></div>
+<div id="bot">
+  <div id="spd-wrap">
+    <span id="spd">0</span><span class="spd-u">km/h</span>
   </div>
-  <div id="maneuvers" class="p-3 space-y-1"></div>
+  <div id="man">
+    <div id="arrow">⬆</div>
+    <div id="man-info">
+      <div id="man-dist">– m</div>
+      <div id="man-street">–</div>
+    </div>
+    <div id="rsums">
+      <div id="rdist">–</div>
+      <div id="rtime">–</div>
+    </div>
+  </div>
+  <button id="ss" onclick="toggleNav()">▶ &nbsp;START</button>
 </div>
 
 <script>
-const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([48.137,11.576],13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+const map = L.map('map', { zoomControl: false, attributionControl: false })
+  .setView([48.137, 11.576], 13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-let userPos=null, destPos=null, userMarker=null, destMarker=null, routeLayer=null, mode='foot';
+let mode = 'foot', userPos = null, userSpeed = 0;
+let destPos = null, route = null, steps = [], curStep = 0, navOn = false;
+let uMark = null, dMark = null, rLine = null;
 
-const mkIcon=(color,size)=>L.divIcon({
-  html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 12px ${color}80"></div>`,
-  iconSize:[size,size],iconAnchor:[size/2,size/2],className:''
+const mkIco = (c, s, anim) => L.divIcon({
+  html: `<div class="${anim ? 'pulse-mark' : ''}" style="width:${s}px;height:${s}px;border-radius:50%;background:${c};border:2.5px solid #fff;${anim ? 'animation:pulse-blue 2s infinite;' : ''}box-shadow:0 0 8px ${c}80;"></div>`,
+  iconSize: [s, s], iconAnchor: [s / 2, s / 2], className: ''
 });
 
 navigator.geolocation.watchPosition(
-  p=>{
-    userPos=[p.coords.latitude,p.coords.longitude];
-    if(!userMarker){userMarker=L.marker(userPos,{icon:mkIcon('#3b82f6',16),zIndexOffset:1000}).addTo(map);map.setView(userPos,15);}
-    else userMarker.setLatLng(userPos);
+  pos => {
+    userPos = [pos.coords.latitude, pos.coords.longitude];
+    userSpeed = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
+    if (!uMark) {
+      uMark = L.marker(userPos, { icon: mkIco('#00A8FF', 16, true), zIndexOffset: 1000 }).addTo(map);
+      map.setView(userPos, 15);
+    } else uMark.setLatLng(userPos);
+    if (mode === 'car') document.getElementById('spd').textContent = Math.round(userSpeed);
+    if (navOn && steps.length) tick();
+    if (navOn) map.setView(userPos, 17);
   },
-  ()=>{userPos=[48.137,11.576];if(!userMarker){userMarker=L.marker(userPos,{icon:mkIcon('#ef4444',16),zIndexOffset:1000}).addTo(map);}},
-  {enableHighAccuracy:true,maximumAge:4000,timeout:12000}
+  () => { if (!userPos) { userPos = [48.137, 11.576]; uMark = L.marker(userPos, { icon: mkIco('#FF3B5C', 14, false), zIndexOffset: 1000 }).addTo(map); } },
+  { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
 );
 
-function center(){if(userPos)map.flyTo(userPos,16,{duration:.8});}
+function center() { if (userPos) map.flyTo(userPos, 16, { duration: .7 }); }
 
-function setMode(m){
-  mode=m;
-  document.getElementById('btnFoot').className='flex-1 py-2 rounded-xl text-sm font-semibold transition-colors '+(m==='foot'?'bg-blue-600 text-white':'bg-gray-800/90 text-gray-300');
-  document.getElementById('btnCar').className='flex-1 py-2 rounded-xl text-sm font-semibold transition-colors '+(m==='car'?'bg-blue-600 text-white':'bg-gray-800/90 text-gray-300');
-  if(destPos)calcRoute();
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.m === m));
+  const sp = document.getElementById('spd-wrap');
+  if (m === 'car' && document.getElementById('bot').classList.contains('open')) sp.classList.add('show');
+  else sp.classList.remove('show');
+  if (destPos) calcRoute();
 }
 
-let debounce;
-document.getElementById('q').addEventListener('input',e=>{
-  clearTimeout(debounce);
-  const v=e.target.value.trim();
-  if(v.length<3){document.getElementById('suggestions').innerHTML='';return;}
-  debounce=setTimeout(()=>suggest(v),420);
+let tmr;
+document.getElementById('q').addEventListener('input', e => {
+  clearTimeout(tmr);
+  const v = e.target.value.trim();
+  if (v.length < 3) { document.getElementById('drop').innerHTML = ''; return; }
+  tmr = setTimeout(() => suggest(v), 400);
+});
+document.getElementById('q').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const v = document.getElementById('q').value.trim(); if (v.length >= 2) suggest(v); }
 });
 
-async function suggest(q){
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=de`,{headers:{'User-Agent':'SamsungCamNav/2.0'}});
-    const d=await r.json();
-    document.getElementById('suggestions').innerHTML=d.map(x=>{
-      const name=x.display_name.split(',');
-      return `<div onclick="pick(${x.lat},${x.lon},\`${x.display_name.replace(/`/g,"'")}\`)"
-        class="px-4 py-3 border-b border-gray-800 last:border-0 cursor-pointer active:bg-gray-700">
-        <div class="text-white text-sm font-medium truncate">${name[0]}</div>
-        <div class="text-gray-500 text-xs truncate">${name.slice(1,3).join(',')}</div>
-      </div>`;
-    }).join('');
-  }catch(e){}
+function clearDest() {
+  document.getElementById('q').value = '';
+  document.getElementById('drop').innerHTML = '';
+  if (dMark) { map.removeLayer(dMark); dMark = null; }
+  if (rLine) { map.removeLayer(rLine); rLine = null; }
+  destPos = null; route = null; steps = [];
+  document.getElementById('bot').classList.remove('open');
+  if (navOn) stopNav();
 }
 
-async function doSearch(){suggest(document.getElementById('q').value.trim());}
+async function suggest(q) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=de`, { headers: { 'User-Agent': 'SamsungCamNav/2.0' } });
+    const d = await r.json();
+    document.getElementById('drop').innerHTML = d.map(x => {
+      const p = x.display_name.split(', ');
+      return `<div class="di" onclick="pick(${x.lat},${x.lon},\`${x.display_name.replace(/`/g,"'")}\`)"><div class="dn">${p[0]}</div>${p[1] ? `<div class="ds">${p.slice(1, 3).join(', ')}</div>` : ''}</div>`;
+    }).join('');
+  } catch {}
+}
 
-function pick(lat,lon,name){
-  destPos=[+lat,+lon];
-  document.getElementById('q').value=name.split(',')[0];
-  document.getElementById('suggestions').innerHTML='';
-  if(destMarker)map.removeLayer(destMarker);
-  destMarker=L.marker(destPos,{icon:mkIcon('#ef4444',20)}).addTo(map);
+function pick(lat, lon, name) {
+  destPos = [+lat, +lon];
+  document.getElementById('q').value = name.split(', ')[0];
+  document.getElementById('drop').innerHTML = '';
+  if (dMark) map.removeLayer(dMark);
+  dMark = L.marker(destPos, { icon: mkIco('#FF3B5C', 20, false) }).addTo(map);
   calcRoute();
 }
 
-async function calcRoute(){
-  if(!userPos||!destPos)return;
-  try{
-    const p=mode==='car'?'car':'foot';
-    const url=`https://router.project-osrm.org/route/v1/${p}/${userPos[1]},${userPos[0]};${destPos[1]},${destPos[0]}?overview=full&geometries=geojson&steps=true`;
-    const r=await fetch(url);
-    const d=await r.json();
-    if(!d.routes?.[0])return;
-    const route=d.routes[0];
-    if(routeLayer)map.removeLayer(routeLayer);
-    routeLayer=L.geoJSON(route.geometry,{style:{color:'#3b82f6',weight:5,opacity:.85,lineJoin:'round',lineCap:'round'}}).addTo(map);
-    map.fitBounds(routeLayer.getBounds(),{padding:[70,70]});
-    const km=(route.distance/1000).toFixed(1);
-    const min=Math.round(route.duration/60);
-    const h=Math.floor(min/60), m=min%60;
-    const dur=h>0?`${h}h ${m}min`:`${m} Min`;
-    document.getElementById('routeInfo').innerHTML=
-      `<span class="text-blue-400 font-bold text-base">${km} km</span> &nbsp;·&nbsp; <span class="text-green-400 font-bold text-base">${dur}</span>`;
-    const icons={depart:'🚀',arrive:'🏁',turn:'↩',roundabout:'🔄','new name':'⬆','fork':'⑂',merge:'⤵','end of road':'⬆',notification:'ℹ',continue:'⬆',rotary:'🔄','roundabout turn':'↩'};
-    const steps=route.legs[0].steps;
-    document.getElementById('maneuvers').innerHTML=steps.map(s=>{
-      const ic=icons[s.maneuver.type]||'➡';
-      const dist=s.distance>=1000?`${(s.distance/1000).toFixed(1)}km`:`${Math.round(s.distance)}m`;
-      return `<div class="flex items-center gap-3 py-2 border-b border-gray-800 last:border-0">
-        <span class="text-xl w-7 text-center">${ic}</span>
-        <span class="flex-1 text-sm text-gray-200 truncate">${s.name||s.maneuver.type}</span>
-        <span class="text-xs text-gray-500 whitespace-nowrap">${dist}</span>
-      </div>`;
-    }).join('');
-    document.getElementById('panel').classList.add('open');
-  }catch(e){console.error(e);}
+const PROF  = { foot: 'foot', train: 'foot', car: 'car' };
+const RCOL  = { foot: '#00A8FF', train: '#FFB300', car: '#00A8FF' };
+
+async function calcRoute() {
+  if (!userPos || !destPos) return;
+  try {
+    const url = `https://router.project-osrm.org/route/v1/${PROF[mode]}/${userPos[1]},${userPos[0]};${destPos[1]},${destPos[0]}?overview=full&geometries=geojson&steps=true`;
+    const d = await (await fetch(url)).json();
+    if (!d.routes?.[0]) return;
+    route = d.routes[0];
+    if (rLine) map.removeLayer(rLine);
+    rLine = L.geoJSON(route.geometry, { style: { color: RCOL[mode], weight: 5, opacity: .9, lineJoin: 'round', lineCap: 'round' } }).addTo(map);
+    map.fitBounds(rLine.getBounds(), { padding: [100, 100] });
+    steps = route.legs[0].steps.map(s => ({
+      pos: [s.maneuver.location[1], s.maneuver.location[0]],
+      name: s.name || s.maneuver.type,
+      dist: s.distance, dur: s.duration,
+      type: s.maneuver.type, mod: s.maneuver.modifier || ''
+    }));
+    curStep = 0;
+    setRSums(route.distance, route.duration);
+    if (steps[0]) showStep(steps[0]);
+    document.getElementById('bot').classList.add('open');
+    if (mode === 'car') document.getElementById('spd-wrap').classList.add('show');
+    else document.getElementById('spd-wrap').classList.remove('show');
+  } catch (e) { console.error(e); }
 }
 
-function togglePanel(){
-  const p=document.getElementById('panel');
-  p.classList.toggle('open');
+function setRSums(dist, dur) {
+  const km = (dist / 1000).toFixed(1);
+  const min = Math.round(dur / 60);
+  const h = Math.floor(min / 60), m = min % 60;
+  document.getElementById('rdist').textContent = km + ' km';
+  document.getElementById('rtime').textContent = h > 0 ? `${h}h ${m}min` : `${min} min`;
+}
+
+const ARROWS = {
+  arrive: '🏁', depart: '⬆', roundabout: '🔄', rotary: '🔄', fork: '⬆',
+  merge: '⬆', 'new name': '⬆', continue: '⬆', notification: 'ℹ'
+};
+function getArrow(type, mod) {
+  if (ARROWS[type]) return ARROWS[type];
+  if (mod.includes('uturn')) return '↩';
+  if (mod.includes('sharp left'))  return '↰';
+  if (mod.includes('sharp right')) return '↱';
+  if (mod.includes('slight left'))  return '↖';
+  if (mod.includes('slight right')) return '↗';
+  if (mod.includes('left'))  return '←';
+  if (mod.includes('right')) return '→';
+  return '⬆';
+}
+
+function showStep(s) {
+  document.getElementById('arrow').textContent = getArrow(s.type, s.mod);
+  document.getElementById('man-street').textContent = s.name;
+  document.getElementById('man-dist').textContent = s.dist >= 1000 ? `${(s.dist / 1000).toFixed(1)} km` : `${Math.round(s.dist)} m`;
+}
+
+function hvs([la1, lo1], [la2, lo2]) {
+  const R = 6371000, r = Math.PI / 180;
+  const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r;
+  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function tick() {
+  while (curStep < steps.length - 1 && hvs(userPos, steps[curStep].pos) < 30) curStep++;
+  showStep(steps[curStep]);
+  let rem = 0;
+  for (let i = curStep; i < steps.length; i++) rem += steps[i].dist;
+  const spd = mode === 'car' ? 50 : 5;
+  setRSums(rem, (rem / 1000 / spd) * 3600);
+}
+
+function toggleNav() { navOn ? stopNav() : startNav(); }
+
+function startNav() {
+  if (!route || !userPos) return;
+  navOn = true; curStep = 0;
+  const btn = document.getElementById('ss');
+  btn.textContent = '■  STOP';
+  btn.classList.add('stop');
+  if (userPos) map.setView(userPos, 17);
+}
+
+function stopNav() {
+  navOn = false;
+  const btn = document.getElementById('ss');
+  btn.textContent = '▶  START';
+  btn.classList.remove('stop');
+  if (route) { setRSums(route.distance, route.duration); if (steps[0]) showStep(steps[0]); }
 }
 </script>
-</body>
-</html>
