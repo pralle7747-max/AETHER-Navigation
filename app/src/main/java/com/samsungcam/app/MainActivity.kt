@@ -283,6 +283,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, GalleryActivity::class.java))
         }
 
+        findViewById<android.view.View>(R.id.btnNav).setOnClickListener {
+            startActivity(Intent(this, NavActivity::class.java))
+        }
+
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) startCamera()
         else permission.launch(Manifest.permission.CAMERA)
     }

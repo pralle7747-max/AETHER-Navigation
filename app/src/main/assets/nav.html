@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Navigation</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0f172a}
+#map{position:fixed;inset:0;z-index:0}
+#ui{position:fixed;top:0;left:0;right:0;z-index:1000;pointer-events:none}
+#ui>*{pointer-events:auto}
+#panel{position:fixed;bottom:0;left:0;right:0;z-index:1000;max-height:45vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s ease}
+#panel.open{transform:translateY(0)}
+.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+#suggestions:empty{display:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="ui" class="p-3 space-y-2">
+  <div class="flex gap-2">
+    <div class="relative flex-1">
+      <input id="q" type="search" autocomplete="off" placeholder="Ziel suchen…"
+        class="w-full bg-gray-900/90 text-white px-4 py-3 rounded-2xl text-base outline-none border border-gray-700 placeholder-gray-500 backdrop-blur"/>
+      <div id="suggestions" class="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-xl z-50"></div>
+    </div>
+    <button onclick="doSearch()" class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 px-4 rounded-2xl font-bold text-lg transition-colors">🔍</button>
+  </div>
+
+  <div class="flex gap-2">
+    <button id="btnFoot" onclick="setMode('foot')"
+      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white transition-colors">🚶 Fuß</button>
+    <button id="btnCar" onclick="setMode('car')"
+      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 transition-colors">🚗 Auto</button>
+    <button onclick="center()"
+      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 active:bg-gray-700 transition-colors">📍 Ich</button>
+    <button onclick="togglePanel()"
+      class="flex-1 py-2 rounded-xl text-sm font-semibold bg-gray-800/90 text-gray-300 active:bg-gray-700 transition-colors" id="btnPanel">≡ Route</button>
+  </div>
+</div>
+
+<div id="panel" class="bg-gray-950 border-t border-gray-800">
+  <div class="sticky top-0 bg-gray-950 p-3 pb-0">
+    <div id="routeInfo" class="text-center text-sm text-gray-400 pb-2 border-b border-gray-800"></div>
+  </div>
+  <div id="maneuvers" class="p-3 space-y-1"></div>
+</div>
+
+<script>
+const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([48.137,11.576],13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+
+let userPos=null, destPos=null, userMarker=null, destMarker=null, routeLayer=null, mode='foot';
+
+const mkIcon=(color,size)=>L.divIcon({
+  html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 12px ${color}80"></div>`,
+  iconSize:[size,size],iconAnchor:[size/2,size/2],className:''
+});
+
+navigator.geolocation.watchPosition(
+  p=>{
+    userPos=[p.coords.latitude,p.coords.longitude];
+    if(!userMarker){userMarker=L.marker(userPos,{icon:mkIcon('#3b82f6',16),zIndexOffset:1000}).addTo(map);map.setView(userPos,15);}
+    else userMarker.setLatLng(userPos);
+  },
+  ()=>{userPos=[48.137,11.576];if(!userMarker){userMarker=L.marker(userPos,{icon:mkIcon('#ef4444',16),zIndexOffset:1000}).addTo(map);}},
+  {enableHighAccuracy:true,maximumAge:4000,timeout:12000}
+);
+
+function center(){if(userPos)map.flyTo(userPos,16,{duration:.8});}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('btnFoot').className='flex-1 py-2 rounded-xl text-sm font-semibold transition-colors '+(m==='foot'?'bg-blue-600 text-white':'bg-gray-800/90 text-gray-300');
+  document.getElementById('btnCar').className='flex-1 py-2 rounded-xl text-sm font-semibold transition-colors '+(m==='car'?'bg-blue-600 text-white':'bg-gray-800/90 text-gray-300');
+  if(destPos)calcRoute();
+}
+
+let debounce;
+document.getElementById('q').addEventListener('input',e=>{
+  clearTimeout(debounce);
+  const v=e.target.value.trim();
+  if(v.length<3){document.getElementById('suggestions').innerHTML='';return;}
+  debounce=setTimeout(()=>suggest(v),420);
+});
+
+async function suggest(q){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=de`,{headers:{'User-Agent':'SamsungCamNav/2.0'}});
+    const d=await r.json();
+    document.getElementById('suggestions').innerHTML=d.map(x=>{
+      const name=x.display_name.split(',');
+      return `<div onclick="pick(${x.lat},${x.lon},\`${x.display_name.replace(/`/g,"'")}\`)"
+        class="px-4 py-3 border-b border-gray-800 last:border-0 cursor-pointer active:bg-gray-700">
+        <div class="text-white text-sm font-medium truncate">${name[0]}</div>
+        <div class="text-gray-500 text-xs truncate">${name.slice(1,3).join(',')}</div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+async function doSearch(){suggest(document.getElementById('q').value.trim());}
+
+function pick(lat,lon,name){
+  destPos=[+lat,+lon];
+  document.getElementById('q').value=name.split(',')[0];
+  document.getElementById('suggestions').innerHTML='';
+  if(destMarker)map.removeLayer(destMarker);
+  destMarker=L.marker(destPos,{icon:mkIcon('#ef4444',20)}).addTo(map);
+  calcRoute();
+}
+
+async function calcRoute(){
+  if(!userPos||!destPos)return;
+  try{
+    const p=mode==='car'?'car':'foot';
+    const url=`https://router.project-osrm.org/route/v1/${p}/${userPos[1]},${userPos[0]};${destPos[1]},${destPos[0]}?overview=full&geometries=geojson&steps=true`;
+    const r=await fetch(url);
+    const d=await r.json();
+    if(!d.routes?.[0])return;
+    const route=d.routes[0];
+    if(routeLayer)map.removeLayer(routeLayer);
+    routeLayer=L.geoJSON(route.geometry,{style:{color:'#3b82f6',weight:5,opacity:.85,lineJoin:'round',lineCap:'round'}}).addTo(map);
+    map.fitBounds(routeLayer.getBounds(),{padding:[70,70]});
+    const km=(route.distance/1000).toFixed(1);
+    const min=Math.round(route.duration/60);
+    const h=Math.floor(min/60), m=min%60;
+    const dur=h>0?`${h}h ${m}min`:`${m} Min`;
+    document.getElementById('routeInfo').innerHTML=
+      `<span class="text-blue-400 font-bold text-base">${km} km</span> &nbsp;·&nbsp; <span class="text-green-400 font-bold text-base">${dur}</span>`;
+    const icons={depart:'🚀',arrive:'🏁',turn:'↩',roundabout:'🔄','new name':'⬆','fork':'⑂',merge:'⤵','end of road':'⬆',notification:'ℹ',continue:'⬆',rotary:'🔄','roundabout turn':'↩'};
+    const steps=route.legs[0].steps;
+    document.getElementById('maneuvers').innerHTML=steps.map(s=>{
+      const ic=icons[s.maneuver.type]||'➡';
+      const dist=s.distance>=1000?`${(s.distance/1000).toFixed(1)}km`:`${Math.round(s.distance)}m`;
+      return `<div class="flex items-center gap-3 py-2 border-b border-gray-800 last:border-0">
+        <span class="text-xl w-7 text-center">${ic}</span>
+        <span class="flex-1 text-sm text-gray-200 truncate">${s.name||s.maneuver.type}</span>
+        <span class="text-xs text-gray-500 whitespace-nowrap">${dist}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('panel').classList.add('open');
+  }catch(e){console.error(e);}
+}
+
+function togglePanel(){
+  const p=document.getElementById('panel');
+  p.classList.toggle('open');
+}
+</script>
+</body>
+</html>
