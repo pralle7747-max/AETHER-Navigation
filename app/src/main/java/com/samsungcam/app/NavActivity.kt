@@ -7,6 +7,7 @@ import android.webkit.GeolocationPermissions
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -28,11 +29,11 @@ class NavActivity : AppCompatActivity() {
             domStorageEnabled = true
             @Suppress("DEPRECATION")
             setGeolocationEnabled(true)
-            geolocationDatabasePath = filesDir.absolutePath
+            @Suppress("DEPRECATION")
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            databaseEnabled = true
         }
 
+        webView.webViewClient = WebViewClient()
         webView.webChromeClient = object : WebChromeClient() {
             override fun onGeolocationPermissionsShowPrompt(
                 origin: String,
