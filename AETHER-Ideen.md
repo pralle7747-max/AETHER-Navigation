@@ -139,3 +139,9 @@ Infrastruktur
 - ❌ 13 Sprachbefehle am PC: im PC-Programm gibt es keine Spracherkennung
 - ✅ Gerät finden (GPS + AR-Pfeil) und „Klingeln lassen“
 - ✅ Wohnungs-Karte: Schritte + Kompass zeichnen den Grundriss, Wände/Räume/Geräte per Tipp, Indoor-Navigation zu Geräten (Schätzung, kein LiDAR)
+
+## v27 (per Auto-Update)
+- ✅ Grundriss-Editor (vor allem PC): Wände und Türen als Linien zeichnen (25-cm-Raster, gerade Linien, Wand-Enden rasten ein, Länge wird angezeigt), Räume, Gegenstände („Schlüssel“) und Geräte setzen, Löschen, Rückgängig (Strg+Z), Zoom/Verschieben
+- ✅ Handy übernimmt den Grundriss per Sync; „🧭 Ausrichten“ richtet ihn am Kompass aus, „📍 Hier stehe ich“ setzt die Position, dann Pfeil + Entfernung zum Gerät/Gegenstand
+- ⏸ Wecker: auf Wunsch weggelassen
+- 💡 Noch offen: Rundum-Scan per Neigungswinkel (Raumumriss durch Drehen im Kreis)
