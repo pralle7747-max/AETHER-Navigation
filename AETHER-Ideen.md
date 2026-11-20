@@ -1,6 +1,6 @@
 # AETHER – Ideen-Liste
 
-Stand: App-Version v19. Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
+Stand: App-Version v20 (Handy-APK + PC-App). Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
 
 ## Runde 1
 1. ✅ Verspätungs-Alarm – Ausfall / nicht mehr erreichbarer Anschluss wird erkannt, neue Verbindung wird automatisch gesucht und die Führung neu gestartet
@@ -87,3 +87,8 @@ Stand: App-Version v19. Alle Ideen bis v17 umgesetzt; Einschränkungen stehen da
 - ✅ Kreuzungs-Zoom, Spuren auch beim Reinzoomen, Ankunfts-Kino, Ampel-Assistent (lernt Wartezeiten)
 - ✅ Live-Benachrichtigung mit Pfeil und Entfernung vorne
 - ✅ Sicherheit: Ok-Abfrage bei langem Stillstand, Begleit-Modus nachts, lauter Alarm
+
+## v20
+- ✅ Abfahrt / Ankunft planen (Jetzt · Abfahrt · Ankunft, Tag und Uhrzeit) – Bahn über VBB/Transitous, Auto/Rad/Fuß mit „Losfahren um …“, Auto mit TomTom-Key inkl. Verkehr zur geplanten Zeit
+- ✅ Eigenes PC-Layout (Seitenleiste wie Google Maps am Computer, Zoom-Knöpfe, Tastatur: / oder Strg+F = Suche, Esc = zurück)
+- ✅ PC-Version als Windows-Installer (Setup.exe)
