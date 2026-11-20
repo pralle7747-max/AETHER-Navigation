@@ -50,6 +50,8 @@ Section "AETHER"
   WriteRegStr HKCU "${UK}" "InstallLocation" "$INSTDIR"
   WriteRegDWORD HKCU "${UK}" "NoModify" 1
   WriteRegDWORD HKCU "${UK}" "NoRepair" 1
+  IfSilent 0 +2
+  Exec '"$INSTDIR\AETHER.exe"'
 SectionEnd
 
 Section "Uninstall"

@@ -29,4 +29,23 @@ app.whenReady().then(()=>{
   });
   win.loadURL('aether://app/index.html');
 });
+// ---- auto update of the PC app itself (web updates come through the app) ----
+async function autoUpdate(){
+  try{
+    const fs=require('fs'),os=require('os'),{spawn}=require('child_process');
+    const r=await net.fetch('https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/version.json?t='+Date.now(),{cache:'no-store'});
+    const m=await r.json(),mine=parseInt(app.getVersion(),10)||0;
+    if(!(m.exe>mine)||!m.setupUrl)return;
+    const res=await net.fetch(m.setupUrl);if(!res.ok)return;
+    const buf=Buffer.from(await res.arrayBuffer());if(buf.length<20e6)return;
+    const f=path.join(os.tmpdir(),'AETHER-Setup-v'+m.exe+'.exe');fs.writeFileSync(f,buf);
+    const go=()=>{spawn(f,['/S'],{detached:true,stdio:'ignore'}).unref();app.quit();};
+    if(win&&!win.isDestroyed()){
+      const {dialog}=require('electron');
+      const c=await dialog.showMessageBox(win,{type:'info',buttons:['Jetzt neu starten','Beim Beenden'],defaultId:0,title:'AETHER Update',message:'AETHER Version '+m.exe+' ist bereit.',detail:m.notes||''});
+      if(c.response===0)go();else app.once('before-quit',()=>{spawn(f,['/S'],{detached:true,stdio:'ignore'}).unref();});
+    }
+  }catch(e){}
+}
+app.whenReady().then(()=>setTimeout(autoUpdate,8000));
 app.on('window-all-closed',()=>app.quit());
