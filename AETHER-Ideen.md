@@ -145,3 +145,7 @@ Infrastruktur
 - ✅ Handy übernimmt den Grundriss per Sync; „🧭 Ausrichten“ richtet ihn am Kompass aus, „📍 Hier stehe ich“ setzt die Position, dann Pfeil + Entfernung zum Gerät/Gegenstand
 - ⏸ Wecker: auf Wunsch weggelassen
 - 💡 Noch offen: Rundum-Scan per Neigungswinkel (Raumumriss durch Drehen im Kreis)
+
+## v28 (per Auto-Update)
+- ✅ Wohnungs-Karte am Handy: „In welchem Raum bist du?“ → „Wohin?“ (Geräte, Gegenstände, Räume) → Weg führt durch die eingezeichneten Türen, mit Pfeil, Entfernung und Ansage
+- ✅ Grundriss wird beim Öffnen sofort und danach alle 10 s synchronisiert (Änderungen vom PC erscheinen direkt am Handy)
