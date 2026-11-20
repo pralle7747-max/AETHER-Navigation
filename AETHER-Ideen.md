@@ -1,6 +1,6 @@
 # AETHER – Ideen-Liste
 
-Stand: App-Version v13. Alle Ideen sind umgesetzt; Einschränkungen stehen dabei.
+Stand: App-Version v18 (neues Menü-Layout im Stil von Google/Apple Maps). Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
 
 ## Runde 1
 1. ✅ Verspätungs-Alarm – Ausfall / nicht mehr erreichbarer Anschluss wird erkannt, neue Verbindung wird automatisch gesucht und die Führung neu gestartet
