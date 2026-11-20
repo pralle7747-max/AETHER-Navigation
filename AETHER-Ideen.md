@@ -104,3 +104,28 @@ Stand: App-Version v22 (Handy-APK + PC-App). Alle Ideen bis v17 umgesetzt; Einsc
 - ✅ Einhand-Modus, Standort-Farbe, Großschrift, hoher Kontrast, Routen-Vorschau-Flug
 - ✅ Toiletten/Trinkwasser, „Nichts vergessen“, Ortserinnerungen, Fotospots, E-Auto-Ladestopps
 - ❌ Schattige Sommer-Routen: keine frei verfügbaren Schattendaten
+
+## Runde 6 – gemerkt (nach v24), Umsetzung in Schritten
+Design & Theme
+1. Eigene Akzentfarbe (Knöpfe, Route, Markierungen) – synchronisiert
+2. Theme-Pakete: „Mitternacht“, „Wald“, „Retro“ (Karte + Knöpfe + Routenfarbe passend)
+3. Schalter: Design auf allen Geräten gleich oder pro Gerät
+4. Auto-Theme nach Situation (Auto: dunkel/kontrastreich, Spaziergang: hell)
+5. App-Symbol passend zum Theme wählen
+
+Sync & Konto
+6. Live-Navigation teilen (andere Geräte sehen Route + Ankunft live)
+7. Familie/Freunde-Gruppe mit freiwilligem Standort und Profilbild
+8. „Bin unterwegs“-Status für eigene Geräte/Gruppe
+9. Verlauf & Routinen auf allen Geräten, Erinnerung auf dem gerade genutzten Gerät
+10. Offline-Karten-Liste synchronisieren (am PC auswählen, Handy lädt im WLAN)
+11. Konto-Sicherung: Export/Import als Datei, „Konto löschen“
+
+Navigation & Feeling
+12. Kleines Abfahrts-Fenster am PC, immer im Vordergrund
+13. Sprachbefehle am PC („Hey AETHER, wann fährt meine S-Bahn?“)
+14. Wetter auf der Route zur genauen Zeit pro Abschnitt (Regen, Glätte)
+
+Infrastruktur
+- Auto-Updater (Handy + PC), damit Updates ohne manuelles Installieren kommen
+- Apple-Version (iPhone/iPad/Mac) als Web-App im Browser
