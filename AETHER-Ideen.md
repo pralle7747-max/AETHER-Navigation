@@ -61,14 +61,14 @@ Stand: App-Version v13. Alle Ideen sind umgesetzt; Einschränkungen stehen dabei
 10. E-Auto-Planer mit Ladestopps
 11. Ortsbezogene Erinnerungen („Milch, wenn ich am Supermarkt vorbeikomme“)
 12. Zeitkapsel-Notizen und Fotos an Orten
-13. ⭐ GEWÜNSCHT – Entdecker-Karte: gelaufene/gefahrene Straßen werden eingefärbt, „32 % von Prenzlauer Berg erkundet“
+13. ✅ (v17) Entdecker-Karte: gelaufene/gefahrene Straßen werden eingefärbt, „32 % von Prenzlauer Berg erkundet“
 14. Wochen-Rückblick am Sonntag
 
 ## Layout & Kartendesign – noch offen
-15. Karten-Themen: „Nacht-Neon“ (dunkel mit leuchtenden Straßen), „Papier“ (Sepia, wie eine alte Karte), „Minimal“ (nur Straßen und Wasser), „Satellit + Beschriftung“
+15. ✅ (v17) Karten-Themen: „Nacht-Neon“ (dunkel mit leuchtenden Straßen), „Papier“ (Sepia, wie eine alte Karte), „Minimal“ (nur Straßen und Wasser), „Satellit + Beschriftung“
 16. Fahrmodus-Layout: im Auto riesige Abbiege-Anzeige, Rest ausgeblendet, Knöpfe größer für Daumen
-17. Tageszeit-Himmel: Farben von Himmel und Karte passen sich Sonnenauf- und -untergang an, nachts Sterne über dem 3D-Horizont
-18. Lebendige Karte: Wasser glitzert leicht, Bäume in Parks als kleine 3D-Bäume, Schatten der Gebäude nach Sonnenstand
+17. ✅ (v17) Tageszeit-Himmel: Farben von Himmel und Karte passen sich Sonnenauf- und -untergang an, nachts Sterne über dem 3D-Horizont
+18. ✅ (v17) Lebendige Karte: Wasser glitzert leicht, Bäume in Parks als kleine 3D-Bäume, Schatten der Gebäude nach Sonnenstand
 19. Linienfarben im ÖPNV-Modus: S-Bahn, U-Bahn und Tram auf der Karte in den echten Linienfarben, Bahnhöfe mit Symbolen
 20. Anpassbare Startseite: Karten (Routinen, Parkplatz, Wetter, Kalender) per Ziehen sortieren und ausblenden
 21. Einhand-Modus: alle Knöpfe unten, Suchleiste unten statt oben
