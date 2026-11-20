@@ -10,3 +10,4 @@ printf '{"name":"aether","productName":"AETHER","version":"%s.0.0","main":"main.
 cd $D && node seticon.js $OUT/AETHER.exe $D/icon.ico $V
 cd $D/out && rm -f $D/AETHER-PC-v$V.zip && zip -qr -9 $D/AETHER-PC-v$V.zip AETHER && ls -la $D/AETHER-PC-v$V.zip
 cd $D && makensis -V2 -DVER=$V -DOUTFILE=$D/AETHER-Setup-v$V.exe setup.nsi && ls -la $D/AETHER-Setup-v$V.exe
+cd $D && makensis -V2 -DVER=$V -DOUTFILE=$D/AETHER-v$V.exe portable.nsi && ls -la $D/AETHER-v$V.exe
