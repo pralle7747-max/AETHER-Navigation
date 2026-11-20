@@ -1,6 +1,6 @@
 # AETHER – Ideen-Liste
 
-Stand: App-Version v18 (neues Menü-Layout im Stil von Google/Apple Maps). Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
+Stand: App-Version v19. Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
 
 ## Runde 1
 1. ✅ Verspätungs-Alarm – Ausfall / nicht mehr erreichbarer Anschluss wird erkannt, neue Verbindung wird automatisch gesucht und die Führung neu gestartet
@@ -75,3 +75,15 @@ Stand: App-Version v18 (neues Menü-Layout im Stil von Google/Apple Maps). Alle 
 22. Eigenes Standort-Design: Farbe des Punkts / Fahrzeugs und des Lichtkegels wählbar
 23. Animierte Routen-Vorschau: kurzer 3D-Kameraflug über die ganze Strecke vor dem Start
 24. Großschrift / hoher Kontrast für bessere Lesbarkeit
+
+## v19 – Ansagen, GPS, Kompass, AR
+- ✅ Bahn/Tunnel: Punkt bleibt auf der Strecke, fährt nur vorwärts; nach Funkloch zählen erst zwei passende GPS-Werte
+- ✅ Neuberechnung: echter Abstand zur Strecke (Fehler bei langen geraden Abschnitten behoben), erst nach 5–6 s, abhängig von GPS-Genauigkeit und Fahrtrichtung
+- ✅ Kompass mit Gyroskop-Glättung, Störungen (Metall) werden ignoriert; neue Kalibrierung (Achter + 10-s-Stabilitätstest), Live-View-Kalibrierung entfernt
+- ✅ AR: leuchtende Linie auf dem Boden mit laufenden Pfeilen, Abbiege-Schild, Ziel-Pin
+- ✅ Ansagen-Persönlichkeiten (Sachlich, Kumpel, Pilot), neue Ansagen (Zeitgewinn, noch 2 Stationen, schnellere Route, grüne Welle, GPS schwach/zurück, Ok-Abfrage) – alle im Demo-Menü, kompakt und detailliert
+- ✅ Stau-Popup mit Annehmen/Ablehnen (TomTom-Key nötig)
+- ✅ 3D-Sound im Kopfhörer, Musik leiser oder pausieren (Fehler behoben: Absenkung griff vorher nie)
+- ✅ Kreuzungs-Zoom, Spuren auch beim Reinzoomen, Ankunfts-Kino, Ampel-Assistent (lernt Wartezeiten)
+- ✅ Live-Benachrichtigung mit Pfeil und Entfernung vorne
+- ✅ Sicherheit: Ok-Abfrage bei langem Stillstand, Begleit-Modus nachts, lauter Alarm
