@@ -26,3 +26,24 @@ Stand: App-Version v13. Alle Ideen sind umgesetzt; Einschränkungen stehen dabei
 
 ## Display aus
 ✅ Navigation, Ansagen und Bahn-Begleitung laufen mit ausgeschaltetem Display weiter (nativer Standort-Dienst treibt die App an). Einstellung „Display während der Navigation anlassen“.
+
+## Runde 3 (v14) – Ideen, die Google Maps nicht hat
+1. ✅ Zugdurchsagen übersetzen (wenn die App-Sprache nicht Deutsch ist; MyMemory, kostenlos)
+2. ✅ Sitzplatz-Tipp beim Einsteigen (vorne/hinten meist leerer; „Zug sehr voll“, wenn die Auslastung gemeldet wird)
+3. ✅ Rad-Navi mit Wind: Gegen-/Rückenwind pro Route, windgünstigere Alternative, Ansage „Ab hier Rückenwind“
+4. ⚠️ Beste Abfahrtszeit (Auto, braucht TomTom-Key)
+5. ✅ Neue AR-Ansicht: Pfeil liegt auf dem Boden, Kompass, Entfernung, automatische Kompass-Kalibrierung
+6. ✅ Spaziergang-Generator (20/30/45/60 min, führt durch einen Park, wenn einer in der Nähe ist)
+7. ✅ Akku-Schutz: ab 15 % dunkle Karte, kein 3D; Warnung, wenn der Akku nicht bis zum Ziel reicht
+8. ✅ Gemeinsam ankommen: Standort-Code teilen, App rechnet aus, wann jeder losmuss
+9. ✅ Ruhige Fußwege + Luftqualität im Routen-Panel
+10. ✅ Pendel-Gedächtnis → siehe Routinen
+11. ✅ Taschen-Modus: Richtungstöne links/rechts im Kopfhörer statt Abbiege-Ansagen
+12. ✅ „Wo bin ich ausgestiegen?“ und „Wo steht mein Fahrrad?“
+
+## Wünsche (v14)
+- ✅ Ansage „S2 steht schon bereit auf Gleis 2 und fährt um 10:12 los“ bzw. „steht jetzt bereit“ (VBB-Fahrzeugposition / Startbahnhof)
+- ✅ „Frag die Karte“: Ankunft, Entfernung, Spritkosten, Parkplatz, Bahn, Wetter, Tempolimit, Akku, Hilfe zur App – per Text oder Sprache
+- ✅ Routinen: erkennt z. B. „Arbeit Mo–Fr ~10:00“ oder „alle 2 Wochen Samstag“, Benachrichtigung am Vorabend und 30 min vorher mit Live-Status (Ausfall/Verspätung/Stau), auch wenn die App zu ist
+- ✅ GPS: Punkt fährt im Tunnel geschätzt weiter (bis 2½ min), kein Springen bei Empfangsrückkehr, ruhigere Richtung auf der Route
+- ✅ „🔍 Ziel nicht gefunden?“ nach der Ankunft → AR-Zielsucher mit Pfeil, Kompass und automatischer Kalibrierung
