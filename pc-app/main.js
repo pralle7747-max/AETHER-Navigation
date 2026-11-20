@@ -1,4 +1,4 @@
-const {app,BrowserWindow,protocol,net,session,shell,globalShortcut}=require('electron');
+const {app,BrowserWindow,protocol,net,session,shell,globalShortcut,ipcMain,nativeImage}=require('electron');
 const path=require('path');const {pathToFileURL}=require('url');
 app.commandLine.appendSwitch('enable-features','WinrtGeolocationImplementation');
 protocol.registerSchemesAsPrivileged([{scheme:'aether',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true,allowServiceWorkers:true}}]);
@@ -17,7 +17,7 @@ app.whenReady().then(()=>{
   session.defaultSession.setPermissionRequestHandler((wc,perm,cb)=>cb(ok.includes(perm)));
   session.defaultSession.setPermissionCheckHandler((wc,perm)=>ok.includes(perm));
   win=new BrowserWindow({width:1280,height:820,minWidth:380,minHeight:600,title:'AETHER',icon:path.join(__dirname,'icon.png'),backgroundColor:'#000000',autoHideMenuBar:true,
-    webPreferences:{contextIsolation:true,sandbox:true,spellcheck:false}});
+    webPreferences:{contextIsolation:true,sandbox:true,spellcheck:false,preload:path.join(__dirname,'preload.js')}});
   win.removeMenu();
   win.webContents.setWindowOpenHandler(({url})=>{if(/^(https?|mailto|tel|sms):/.test(url))shell.openExternal(url);return {action:'deny'};});
   win.webContents.on('will-navigate',(e,url)=>{if(!url.startsWith('aether://')){e.preventDefault();if(/^(https?|mailto|tel|sms):/.test(url))shell.openExternal(url);}});
@@ -28,6 +28,14 @@ app.whenReady().then(()=>{
     else if(i.key==='F5'||(i.control&&i.key.toLowerCase()==='r')){win.webContents.reload();e.preventDefault();}
   });
   win.loadURL('aether://app/index.html');
+  let mini=null;
+  ipcMain.on('aether-mini',(e,on)=>{
+    if(!on){if(mini&&!mini.isDestroyed())mini.close();mini=null;return;}
+    if(mini&&!mini.isDestroyed()){mini.show();mini.focus();return;}
+    mini=new BrowserWindow({width:360,height:440,alwaysOnTop:true,title:'AETHER Abfahrten',icon:path.join(__dirname,'icon.png'),autoHideMenuBar:true,webPreferences:{contextIsolation:true,sandbox:true,preload:path.join(__dirname,'preload.js')}});
+    mini.removeMenu();mini.setAlwaysOnTop(true,'floating');mini.loadURL('aether://app/index.html#mini');mini.on('closed',()=>{mini=null;});
+  });
+  ipcMain.on('aether-icon',(e,url)=>{try{const img=nativeImage.createFromDataURL(url);if(!img.isEmpty()&&win&&!win.isDestroyed())win.setIcon(img);}catch(x){}});
 });
 // ---- auto update of the PC app itself (web updates come through the app) ----
 async function autoUpdate(){

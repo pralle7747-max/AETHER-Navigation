@@ -129,3 +129,13 @@ Navigation & Feeling
 Infrastruktur
 - Auto-Updater (Handy + PC), damit Updates ohne manuelles Installieren kommen
 - Apple-Version (iPhone/iPad/Mac) als Web-App im Browser
+
+## v26 (per Auto-Update)
+- ✅ Routen speichern (synchronisiert), Liste auf der Startseite und im Menü „Mehr“
+- ✅ 1 Akzentfarbe · 2 Theme-Pakete Mitternacht/Wald/Retro · 3 Design nur auf diesem Gerät · 4 Auto-Design (Auto dunkel, zu Fuß hell)
+- ⚠️ 5 App-Symbol: am PC färbt sich das Taskleisten-Symbol in der Akzentfarbe; am Handy geht das nur mit neuer nativer Version
+- ✅ 6 Navigation teilen · 7 Familie-/Freunde-Gruppe (update-v26.sql nötig) · 8 „unterwegs nach …“ · 9 Verlauf + Routinen nur auf gewähltem Gerät · 10 Offline-Karten vom PC aufs Handy (WLAN) · 11 Sicherung, Import, Konto löschen
+- ✅ 12 Abfahrts-Fenster am PC (immer im Vordergrund) · 14 Wetter auf der Route zur Ankunftszeit
+- ❌ 13 Sprachbefehle am PC: im PC-Programm gibt es keine Spracherkennung
+- ✅ Gerät finden (GPS + AR-Pfeil) und „Klingeln lassen“
+- ✅ Wohnungs-Karte: Schritte + Kompass zeichnen den Grundriss, Wände/Räume/Geräte per Tipp, Indoor-Navigation zu Geräten (Schätzung, kein LiDAR)
