@@ -1,25 +1,28 @@
 # AETHER – Ideen-Liste
 
-Stand: aktuelle App-Version v12. Noch nicht umgesetzt.
+Stand: App-Version v13. Alle Ideen sind umgesetzt; Einschränkungen stehen dabei.
 
 ## Runde 1
-1. Verspätungs-Alarm vor der Abfahrt – Ausfall/verpasster Umstieg erkennen, sofort Alternative vorschlagen
-2. „Lauf schneller“-Hinweis – auf dem Weg zur Haltestelle sagen, ob man die Bahn noch schafft
-3. Wo im Zug einsteigen – vorne/hinten, damit man am Ausgang/Aufzug ankommt (wo OSM-Daten vorhanden)
-4. Widget / Startbildschirm – „Nach Hause“ / „Zur Arbeit“ mit nächster Abfahrt
-5. Spritpreise beim Tanken – Tankerkönig-API (kostenloser Schlüssel)
-6. Parkplatz-Erinnerung – Auto-Bluetooth getrennt → Parkort automatisch speichern
-7. Offline-Routen – Kartenausschnitt + Route vorab speichern
-8. Fahrtenbuch / Statistik – km, Zeit, CO₂ im Vergleich zum Auto
+1. ✅ Verspätungs-Alarm – Ausfall / nicht mehr erreichbarer Anschluss wird erkannt, neue Verbindung wird automatisch gesucht und die Führung neu gestartet
+2. ✅ „Zügig gehen“-Hinweis auf dem Weg zur Haltestelle; ist die Bahn nicht mehr zu schaffen → neue Verbindung
+3. ✅ Wo im Zug einsteigen (vorne / Mitte / hinten, zum Ausgang bzw. im Barrierefrei-Modus zum Aufzug) – nur wo OpenStreetMap Bahnsteige und Zugänge kennt
+4. ⚠️ Startbildschirm – „Nach Hause“ / „Zur Arbeit“ als App-Verknüpfungen (lange auf das Symbol drücken oder auf den Startbildschirm legen). Ein echtes Widget mit Live-Abfahrt braucht Android-Ressourcen, die sich ohne Neukompilieren der App nicht ergänzen lassen
+5. ✅ Spritpreise (Tankerkönig, kostenloser API-Key nötig), sortiert nach Preis, Sorte E5/E10/Diesel wählbar
+6. ✅ Parkplatz merken: automatisch bei Ankunft mit dem Auto und beim Trennen vom Auto-Bluetooth (solange die App im Hintergrund läuft)
+7. ✅ Karte entlang der Route wird beim Start offline vorgeladen; abgebrochene Navigation lässt sich fortsetzen
+8. ✅ Statistik: km, Zeit, Fahrten pro Verkehrsmittel, CO₂-Ersparnis (Woche / gesamt)
 
 ## Runde 2
-9. Aufzug-/Barrierefrei-Modus – Routen mit Aufzügen statt Treppen, Warnung bei kaputtem Aufzug (BVG/VBB-Störungsmeldungen)
-10. Sharing-Fahrzeuge in der Nähe – E-Scooter, Leihräder, Carsharing auf der Karte und als Routenoption
-11. Wetter-bewusste Routen – bei Regen überdachte Wege / mehr ÖPNV vorschlagen, Regen-Warnung vor dem Losgehen
-12. „Ich komme später“ automatisch – Ankunftszeit-Updates an einen Kontakt, wenn sich die Ankunft verschiebt
-13. Kalender-Abfahrtserinnerung – aus Terminen mit Ort rechtzeitig „Jetzt losgehen“ melden
-14. Nachtmodus für Frauen/Alleinreisende – belebte, beleuchtete Straßen bevorzugen, Sicherer-Weg-Wächter automatisch
-15. Stau-Vorhersage für Pendelstrecken – morgens melden, ob man früher los muss
-16. Zwischenstopps planen – mehrere Ziele, z. B. Tanken + Bäcker + Arbeit, optimale Reihenfolge
-17. Lieblingsplätze teilen – Liste mit Freunden per Link teilen, gemeinsames Ziel abstimmen
-18. Smartwatch-Navigation – Abbiegepfeile und Vibration direkt auf der Galaxy Watch, Handy kann in der Tasche bleiben
+9. ✅ Barrierefrei-Modus: stufenlose Fußwege (Valhalla „wheelchair“), barrierefreie Verbindungen (VBB / Transitous), Aufzugsstörungen aus VBB-Meldungen
+10. ✅ Leihräder in der Nähe (nextbike / Jelbi-Stationen) – andere Anbieter haben keine offene Schnittstelle
+11. ✅ Regen-Hinweis für Fuß- und Radrouten mit Knopf „Zur Bahn“ (Open-Meteo)
+12. ⚠️ Verspätung melden: nach „Ankunft teilen“ fragt die App bei +5 min, ob der Kontakt informiert werden soll – automatisch ohne Bestätigung verschicken erlaubt Android nicht
+13. ⚠️ Kalender: nächster Termin mit Ort, „losgehen um …“ und Erinnerung – nur solange die App läuft
+14. ✅ Nachts sichere Wege: beleuchtete Straßen bevorzugt (Valhalla), Sicherer-Weg-Wächter startet nachts automatisch (Notfallkontakt nötig)
+15. ⚠️ Stau zur Arbeit: werktags 5–10 Uhr Karte mit Verzögerung – braucht den TomTom-Key
+16. ✅ Mehrere Zwischenstopps mit „Reihenfolge optimieren“
+17. ✅ Favoriten als Link teilen und importieren; „Treffpunkt“ sucht Cafés in der Mitte
+18. ✅ Smartwatch: Abbiege-Pfeile in den Uhr-Hinweisen, unterschiedliche Vibration für links / rechts / wenden
+
+## Display aus
+✅ Navigation, Ansagen und Bahn-Begleitung laufen mit ausgeschaltetem Display weiter (nativer Standort-Dienst treibt die App an). Einstellung „Display während der Navigation anlassen“.
