@@ -1,6 +1,6 @@
 # AETHER – Ideen-Liste
 
-Stand: App-Version v20 (Handy-APK + PC-App). Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
+Stand: App-Version v22 (Handy-APK + PC-App). Alle Ideen bis v17 umgesetzt; Einschränkungen stehen dabei.
 
 ## Runde 1
 1. ✅ Verspätungs-Alarm – Ausfall / nicht mehr erreichbarer Anschluss wird erkannt, neue Verbindung wird automatisch gesucht und die Führung neu gestartet
@@ -92,3 +92,15 @@ Stand: App-Version v20 (Handy-APK + PC-App). Alle Ideen bis v17 umgesetzt; Einsc
 - ✅ Abfahrt / Ankunft planen (Jetzt · Abfahrt · Ankunft, Tag und Uhrzeit) – Bahn über VBB/Transitous, Auto/Rad/Fuß mit „Losfahren um …“, Auto mit TomTom-Key inkl. Verkehr zur geplanten Zeit
 - ✅ Eigenes PC-Layout (Seitenleiste wie Google Maps am Computer, Zoom-Knöpfe, Tastatur: / oder Strg+F = Suche, Esc = zurück)
 - ✅ PC-Version als Windows-Installer (Setup.exe)
+
+## v22
+- ✅ Fix: Straße + Hausnummer heißt jetzt „Büschingstraße 11“ statt „11“; Kategorien auf Deutsch (Adresse, Straße, Café …)
+- ✅ Start und Ziel in der Routenansicht antippen und ändern (eigener Startpunkt nur als Vorschau, Navigation startet am Standort)
+- ✅ PC: Route aufs Handy (QR-Code), Drucken, Abfahrten + Wochenplan in der Seitenleiste, Standard-Standort eingeben
+- ✅ Sync Handy ↔ PC per Code/QR (ohne Server), Code scannen am Handy
+- ✅ Wochenplaner mit „losgehen um …“, Wochen-Rückblick (sonntags)
+- ✅ Parken am Ziel mit anschließendem Fußweg, Abfahrtsmonitor (mit Benachrichtigung am Handy), Umsteige-Lotse
+- ✅ Live-Fahrzeuge (Berlin) + Meldungen bei Abfahrten, echte Berliner Linienfarben
+- ✅ Einhand-Modus, Standort-Farbe, Großschrift, hoher Kontrast, Routen-Vorschau-Flug
+- ✅ Toiletten/Trinkwasser, „Nichts vergessen“, Ortserinnerungen, Fotospots, E-Auto-Ladestopps
+- ❌ Schattige Sommer-Routen: keine frei verfügbaren Schattendaten
