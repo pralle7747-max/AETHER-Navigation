@@ -170,3 +170,7 @@ Infrastruktur
 - ✅ Fix: Im Zug kein „Route wird neu berechnet“-Spam mehr. Bei schneller Fahrt auf einer Fußroute rechnet die App nicht neu, sondern sucht den Zug (VBB-Live) und wechselt in die Fahrt-Begleitung
 - ✅ „Zug schaffst du nicht mehr“ greift nicht mehr, während du schon fährst
 - ✅ „Route wird neu berechnet“ höchstens alle 90 Sekunden
+
+## v33 (per Auto-Update)
+- ✅ Zugfahrt ohne Zug-Erkennung: schnell + auf/neben Gleisen (OSM) oder sehr schnell = Zug. Läuft die geplante Verbindung dort, wird direkt deren Fahrt-Begleitung genutzt; sonst „🚆 Zugfahrt erkannt“: keine Neuberechnung, Ansage „Ziel nur noch … – am nächsten Halt aussteigen“, nach dem Aussteigen wird automatisch neu geplant
+- ✅ Funktioniert überall, nicht nur in Berlin/Brandenburg
