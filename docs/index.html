@@ -2,7 +2,7 @@
 <html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||30;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>30&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||31;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>31&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -2242,7 +2242,7 @@ async function openRoute(){
       setDur(m);if(mode===m&&screen==='route')drawAndRender();
     });
   });
-  ((movingFast()&&!reversed&&!startItem&&planValid().k==='now')?onboardJourneys(e.to).then(l=>l&&l.length?l:vbb(e.from,e.to)).catch(()=>vbb(e.from,e.to)):vbb(e.from,e.to)).then(l=>{R.rail=l;}).catch(()=>{R.rail=[];}).then(()=>{
+  ((movingFast()&&!reversed&&!startItem&&planValid().k==='now')?Promise.race([onboardJourneys(e.to),new Promise(z=>setTimeout(()=>z(null),12000))]).then(l=>l&&l.length?l:vbb(e.from,e.to)).catch(()=>vbb(e.from,e.to)):vbb(e.from,e.to)).then(l=>{R.rail=l;}).catch(()=>{R.rail=[];}).then(()=>{
     if(id!==routeId)return;
     setDur('rail');if(mode==='rail'&&screen==='route')drawAndRender();
   });
@@ -2460,7 +2460,7 @@ async function beginNav(){
         clearInterval(trTimer);trTimer=setInterval(trTick,2000);
         if(j.onboard||movingFast()){railInfo=null;TR.fast=true;}
       }
-      if(j.onboard&&TR){const lg=TR.j.legs[TR.li];r={coords:lg.coords.length>1?lg.coords:[pos,lg.to.ll],distance:0,duration:(lg.arr-Date.now())/1000,raw:[]};}
+      if(j.onboard&&TR){const lg=TR.j.legs[TR.li];try{r=(await osrm('foot',pos,lg.to.ll,false))[0];}catch(e){r={coords:[pos,lg.to.ll],distance:hav(pos,lg.to.ll),duration:60,raw:[{maneuver:{type:'depart',location:[pos[1],pos[0]]},name:'',distance:0,duration:0},{maneuver:{type:'arrive',location:[lg.to.ll[1],lg.to.ll[0]]},name:'',distance:0,duration:0}]};}}
       else r=(await osrm('foot',pos,[ll.lat,ll.lng],false))[0];
     }else{
       if(!R[mode]||!R[mode].length)R[mode]=await osrm(mode,pos,[destLatLng.lat,destLatLng.lng],true,true);
@@ -2468,7 +2468,7 @@ async function beginNav(){
     }
     applyNavRoute(r,ll,nm);
     drawNavLine();
-    startNav(true,true);
+    startNav(true,!(mode==='rail'&&TR&&(TR.j.onboard||TR.fast)));
     if(mode==='rail'&&TR&&TR.j.onboard){trBoard('ride');const lg=TR.j.legs[TR.li];speak(t('ob_found',{l:lineSay(lg),d:stName(lg.dir||lg.to.name)}),true,3);}
     else if(mode==='rail'&&TR&&TR.fast)speak(t('ob_detect'),true,3);
   }catch(e){toast(t('start_fail'));}
@@ -4826,7 +4826,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=30,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=31,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
@@ -5293,12 +5293,13 @@ function arRoadMask(v,W,H,vis,prj){
   o.putImageData(im,0,0);return arRO;
 }
 // ===== v30: already on the train when starting =====
+async function fetchJ(u,ms){const c=new AbortController(),tm=setTimeout(()=>c.abort(),ms||7000);try{const r=await fetch(u,{signal:c.signal});return await r.json();}finally{clearTimeout(tm);}}
 function avgSpeed(){const now=Date.now(),h=hist.filter(x=>now-x.t<25000);if(h.length<3)return curSpeed||0;const dt=(h[h.length-1].t-h[0].t)/1000;return dt>4?hav(h[0].p,h[h.length-1].p)/dt:(curSpeed||0);}
 function movingFast(){return gotFix&&kfAcc()<120&&!simTimer&&Math.max(avgSpeed(),curSpeed||0)>6;}
 async function findMyTrain(){
   if(!inVBB(pos))return null;
   const dl=0.012,u='https://v6.vbb.transport.rest/radar?north='+(pos[0]+dl).toFixed(4)+'&west='+(pos[1]-dl*1.6).toFixed(4)+'&south='+(pos[0]-dl).toFixed(4)+'&east='+(pos[1]+dl*1.6).toFixed(4)+'&results=120&duration=30&frames=0&polylines=false';
-  const d=await (await fetch(u)).json(),mv=(d.movements||d||[]).filter(m=>m.location&&m.tripId&&m.line);
+  const d=await fetchJ(u,6000),mv=(d.movements||d||[]).filter(m=>m.location&&m.tripId&&m.line);
   let best=null,bs=1e9;
   mv.forEach(m=>{
     const p=[m.location.latitude,m.location.longitude],dist=hav(pos,p);if(dist>700)return;
@@ -5318,7 +5319,7 @@ function slicePoly(pl,a,b){
 }
 async function onboardJourneys(to){
   const m=await findMyTrain();if(!m)return null;
-  const tj=await (await fetch('https://v6.vbb.transport.rest/trips/'+encodeURIComponent(m.tripId)+'?stopovers=true&polyline=true&remarks=false&language='+S.lang)).json(),trip=tj.trip||tj;
+  const tj=await fetchJ('https://v6.vbb.transport.rest/trips/'+encodeURIComponent(m.tripId)+'?stopovers=true&polyline=true&remarks=false&language='+S.lang,7000),trip=tj.trip||tj;
   const sv=(trip.stopovers||[]).filter(x=>x.stop&&x.stop.location);if(sv.length<2)return null;
   const T=x=>Date.parse(x.arrival||x.plannedArrival||x.departure||x.plannedDeparture)||0,now=Date.now();
   let ni=sv.findIndex(x=>T(x)>now-20000);if(ni<0)return null;if(ni<1)ni=1;
@@ -5331,7 +5332,7 @@ async function onboardJourneys(to){
   {const ride=mk(ni-1,kb),legs=[ride];if(kd>60)legs.push(walkLeg(ride));out.push({legs,dep:ride.dep,arr:legs[legs.length-1].arr,duration:(legs[legs.length-1].arr-ride.dep)/1000,synthetic:false,source:'VBB',onboard:true});}
   // 2) connections from the next stop (VBB decides if staying on is best)
   try{
-    const nx=sv[ni],r=await (await fetch('https://v6.vbb.transport.rest/journeys?from='+encodeURIComponent(nx.stop.id)+'&to.latitude='+to[0]+'&to.longitude='+to[1]+'&to.address=Ziel&departure='+encodeURIComponent(new Date(T(nx)).toISOString())+'&results=4&polylines=true&stopovers=true&language='+S.lang)).json();
+    const nx=sv[ni],r=await fetchJ('https://v6.vbb.transport.rest/journeys?from='+encodeURIComponent(nx.stop.id)+'&to.latitude='+to[0]+'&to.longitude='+to[1]+'&to.address=Ziel&departure='+encodeURIComponent(new Date(T(nx)).toISOString())+'&results=4&polylines=true&stopovers=true&language='+S.lang,8000);
     (r.journeys||[]).map(parseJourney).filter(Boolean).forEach(j=>{
       let legs=j.legs.slice();while(legs.length&&legs[0].walking&&(legs[0].arr-legs[0].dep)<60000)legs.shift();
       if(!legs.length)return;

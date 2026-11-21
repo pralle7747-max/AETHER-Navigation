@@ -160,3 +160,8 @@ Infrastruktur
 - ✅ Start in der Fahrt: Bewegst du dich schnell, sucht die App deinen Zug im VBB-Live-Radar (Position + Fahrtrichtung), plant ab dem nächsten Halt bzw. „sitzen bleiben bis …“ und startet direkt die Fahrt-Begleitung
 - ✅ Bessere Einstiegs-/Bahnhofserkennung: Durchschnittstempo statt Momentanwert, Abstand zur Strecke passt sich der GPS-Genauigkeit an
 - ⚠️ Erkennung des Zugs per Live-Radar nur im VBB-Gebiet (Berlin/Brandenburg); außerhalb sagt die App „Ich erkenne gleich deinen Zug“ statt „Laufe zum Bahnhof“
+
+## v31 (per Auto-Update)
+- ✅ Fix: Beim Start im Zug öffnete sich das Fahrt-Fenster nicht (Navigation schaltete nicht um) – behoben
+- ✅ Fix: Zug-Erkennung wartet höchstens 12 s auf den VBB-Server, danach normale Planung (vorher konnte das Verbindungs-Fenster hängen bleiben)
+- ✅ Beim Start im Zug kommt die richtige Ansage („Du sitzt in der …“) statt der Fußweg-Ansage
