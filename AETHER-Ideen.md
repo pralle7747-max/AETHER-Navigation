@@ -246,3 +246,10 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Abfahrten: „Abfahrt in N min“ zählt live, alle 2 min automatisch neu (nicht im Ultra-Modus)
 - Zug: erste Verbindung sofort auf der Karte als Vorschau
 - Fix: Wechsel Zug → Auto zeigt immer das richtige Panel; Kartenausschnitt passt auch bei großem Panel
+
+
+## v45 – Autobahn-Sparen (Premium)
+- Erkennung: Navigation Auto, ≥58 km/h über ~14 s, nächste Abbiegung >2,6 km (Ultra: ≥47 km/h, >1,8 km)
+- Sparen: Kamera ~12 Bilder/s statt 60, Pixel-Ratio 1.25, 3D-Gelände aus, Karte abgedunkelt (OLED), weniger Spur-/Routen-Updates
+- Ende: 1,8 km vor Abbiegung, langsamer als 40 km/h, Gefahr voraus, Antippen (60 s) oder Chip (10 min Pause)
+- Tipp-Hinweis: Bildschirm aus, Ansagen laufen weiter; Statistik „min im Sparmodus“
