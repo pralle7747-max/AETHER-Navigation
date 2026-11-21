@@ -174,3 +174,7 @@ Infrastruktur
 ## v33 (per Auto-Update)
 - ✅ Zugfahrt ohne Zug-Erkennung: schnell + auf/neben Gleisen (OSM) oder sehr schnell = Zug. Läuft die geplante Verbindung dort, wird direkt deren Fahrt-Begleitung genutzt; sonst „🚆 Zugfahrt erkannt“: keine Neuberechnung, Ansage „Ziel nur noch … – am nächsten Halt aussteigen“, nach dem Aussteigen wird automatisch neu geplant
 - ✅ Funktioniert überall, nicht nur in Berlin/Brandenburg
+
+## v34 (per Auto-Update)
+- ✅ Geplanter Zug hat Vorrang: Fährst du schnell und der Zug aus deiner Route fährt laut Fahrplan gerade (±2–3 Min), sitzt du in diesem Zug – auch wenn das GPS bis 2,5 km neben der Linie liegt oder die Verbindung keine genaue Streckenlinie hat
+- ✅ Live-Suche (VBB) nur noch, wenn gerade kein geplanter Zug fährt; dabei wird die geplante Linie bevorzugt

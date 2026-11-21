@@ -2,7 +2,7 @@
 <html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||33;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>33&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||34;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>34&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -2894,7 +2894,7 @@ async function optimizeVias(){
 }
 // ---------- rail: hurry / missed connection / replanning ----------
 function trWalkWatch(){
-  if(movingFast()){trFastReplan();return;}
+  if(movingFast()){if(!trPlannedLegNear())trFastReplan();return;}
   const leg=TR.j.legs[TR.li],now=Date.now();
   if(now-(TR.rf||0)>60000){TR.rf=now;trRefresh(leg);}
   if(leg.cancelled&&!TR.missed){trAlarm('conn_cancel',leg);return;}
@@ -4830,7 +4830,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=33,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=34,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
@@ -5309,7 +5309,7 @@ async function findMyTrain(){
     const p=[m.location.latitude,m.location.longitude],dist=hav(pos,p);if(dist>700)return;
     const ns=(m.nextStopovers||[]).find(x=>x.stop&&x.stop.location&&(Date.parse(x.arrival||x.plannedArrival||x.departure||x.plannedDeparture)||0)>Date.now()-30000);
     let aligned=true;if(ns&&hdg!=null){aligned=Math.abs(angDiff(bearing(pos,[ns.stop.location.latitude,ns.stop.location.longitude]),hdg))<75;}
-    const rail=/suburban|subway|regional|express/.test(m.line.product||''),sc=dist+(aligned?0:500)+(rail?0:avgSpeed()>14?600:150);
+    const rail=/suburban|subway|regional|express/.test(m.line.product||''),planned=TR&&TR.j.legs.some(l=>!l.walking&&l.name&&l.name.replace(/\s/g,'')===String(m.line.name||'').replace(/\s/g,'')),sc=dist+(aligned?0:500)+(rail?0:avgSpeed()>14?600:150)-(planned?800:0);
     if(sc<bs){bs=sc;best=m;}
   });
   return best;
@@ -5380,11 +5380,13 @@ function railDist(){
   let bd=1e9;railWays.forEach(g=>{for(let k=0;k<g.length-1;k++){const A=g[k],B=g[k+1],cl=Math.cos(rad(A[0]));const bx=(B[1]-A[1])*cl,by=B[0]-A[0],px=(pos[1]-A[1])*cl,py=pos[0]-A[0];const L=bx*bx+by*by,u=L?Math.max(0,Math.min(1,(px*bx+py*by)/L)):0;const d=hav(pos,[A[0]+by*u,A[1]+bx*u/cl]);if(d<bd)bd=d;}});return bd;
 }
 function onTrain(){if(!movingFast())return false;railLoad();const rd=railDist();return rd<Math.max(45,Math.min(120,kfAcc()*1.5))||avgSpeed()>16;}
+function segDistPt(p,a,b){const cl=Math.cos(rad(a[0])),bx=(b[1]-a[1])*cl,by=b[0]-a[0],px=(p[1]-a[1])*cl,py=p[0]-a[0],L=bx*bx+by*by,u=L?Math.max(0,Math.min(1,(px*bx+py*by)/L)):0;return hav(p,[a[0]+by*u,a[1]+bx*u/cl]);}
 // the planned connection runs here -> just switch to that leg
 function trPlannedLegNear(){
   if(!TR||!gotFix)return false;const L=TR.j.legs,now=Date.now();
   for(let i=TR.li;i<L.length;i++){const lg=L[i];if(lg.walking||!legGeo(lg))continue;if(now<+lg.dep-300000||now>+lg.arr+600000)continue;
-    if(nearestV(lg.coords,pos).d<Math.max(120,kfAcc()*2)){hushAll();FR=null;TR.li=i;railInfo=null;trBoard('ride');speak(t('tr_onboard',{l:lineSay(lg)}),true,3);haptic([80,60,80]);return true;}}
+    const dLine=lg.coords.length>2?nearestV(lg.coords,pos).d:(lg.from.ll&&lg.to.ll?segDistPt(pos,lg.from.ll,lg.to.ll):1e9),running=now>=+lg.dep-120000&&now<=+lg.arr+180000;
+    if(dLine<Math.max(120,kfAcc()*2)||(running&&movingFast()&&dLine<2500)){hushAll();FR=null;TR.li=i;railInfo=null;trBoard('ride');speak(t('tr_onboard',{l:lineSay(lg)}),true,3);haptic([80,60,80]);return true;}}
   return false;
 }
 // generic ride: stay quiet, watch the destination, replan once you get off
