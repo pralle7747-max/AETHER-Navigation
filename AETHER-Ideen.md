@@ -209,3 +209,9 @@ Infrastruktur
 ## v39 (per Auto-Update)
 - ✅ Fix: Langes Drücken (½ s) auf die Karte öffnet das Kreismenü zuverlässig – kleines Finger-Wackeln und Kamerabewegungen brechen es nicht mehr ab
 - ✅ Fix: Zurück-Geste vom Bildschirmrand öffnet das Menü nicht mehr
+
+## v40 (per Auto-Update)
+- ✅ Antippen von Restaurant/Laden: „Jetzt geöffnet/geschlossen“, Küche, vegan/vegetarisch, To-go, Lieferung, Außenplätze, barrierefrei, WLAN, Kartenzahlung (aus OpenStreetMap)
+- ✅ Knöpfe: 🍽 Speisekarte (direkter Link, sonst Suche nach der aktuellen Karte), 🏷 Angebote & Prospekt (Suche nach den Angeboten dieser Woche), 🌐 Website, 📞 Anrufen
+- ✅ Tankstellen: Live-Preise E5/E10/Diesel (mit Tankerkönig-Key)
+- ⚠️ Live-Preise und Wochenangebote von Läden gibt es nicht frei abrufbar – daher Link/Suche statt Preisliste in der App
