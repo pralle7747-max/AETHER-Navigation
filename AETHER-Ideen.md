@@ -232,3 +232,9 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - ✅ Mehr Routen für Auto, Rad, zu Fuß: bis zu 3 Alternativen vom Routing-Dienst + eigene Varianten über Umwege links/rechts; Doppelte und zu lange werden aussortiert; bis zu 5 Routen
 - ✅ Routen-Liste: Dauer · Länge · „über …“ · „+3 min“ · schnellste/kürzeste, antippen zum Wechseln
 - ✅ Bahn: bis zu 12 Verbindungen, Knöpfe „◂ Frühere“ / „Spätere Verbindungen ▸“
+
+
+## v43 – Ultra-Sparmodus & Verkehr
+- Ultra-Sparmodus (Premium): dunkel, kein 3D/Gelände/Himmel, gedrosselte Puck-Animation, Pixel-Ratio 1.5, Sync alle 5 min, AR-Straße aus; automatisch unter 20 % Akku; beim Ausschalten wird alles wiederhergestellt
+- Verkehr: Verkehrsfluss-Ebene, Unfall-/Baustellen-/Sperrungsmeldungen (TomTom, kostenloser Key)
+- Route: Stau-Färbung, „Stau auf der Route: +N min“ / „Freie Fahrt“, Stau-Check alle 3 min in der Navigation mit Ansage ab 5 min

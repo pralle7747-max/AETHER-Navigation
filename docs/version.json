@@ -1,1 +1,8 @@
-{"web": 42, "apk": 25, "exe": 26, "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v26.apk", "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe", "notes": "Mehr Routen: bis zu 5 Alternativen mit Liste (Dauer, Länge, über welche Straße); Bahn mit frühere/spätere Verbindungen"}
+{
+ "web": 43,
+ "apk": 25,
+ "exe": 26,
+ "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v26.apk",
+ "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
+ "notes": "v43: Ultra-Sparmodus (Premium, auto unter 20 % Akku) + Verkehr & Stau: Meldungen auf der Karte, Stau-Färbung der Route, \"+N min\" und Ansage während der Navigation"
+}
