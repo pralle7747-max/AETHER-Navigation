@@ -2,7 +2,7 @@
 <html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||31;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>31&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||32;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>32&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -2751,7 +2751,9 @@ function routeDist(p){
 }
 let offSince=0;
 function checkOffRoute(){
-  if(simTimer||rerouting||!routeCoords.length||(TR&&TR.phase==='ride'))return;
+  if(simTimer||rerouting||!routeCoords.length||(TR&&TR.phase!=='walk'))return;
+  if((mode==='foot'||mode==='rail'||TR)&&movingFast()){offSince=0;if(TR)trFastReplan();return;}
+  if(mode==='bike'&&avgSpeed()>13){offSince=0;return;}
   const now=Date.now(),acc=kfAcc(),sp=curSpeed||0;
   if(acc>50||now-realFixT>3000){offSince=0;return;}
   const d=routeDist(pos),lim=(mode==='car'?(sp>22?60:40):mode==='bike'?35:30)+Math.min(35,acc*0.7);
@@ -2763,7 +2765,7 @@ function checkOffRoute(){
 }
 async function reroute(){
   rerouting=true;lastReroute=Date.now();
-  annOn('reroute')&&speak(DET()?t('dt_reroute'):t('sp_reroute'));
+  if(Date.now()-(reroute.said||0)>90000){reroute.said=Date.now();annOn('reroute')&&speak(DET()?t('dt_reroute'):t('sp_reroute'));}
   try{
     const m=mode==='car'?'car':mode==='bike'?'bike':'foot';
     const r=(await osrm(m,pos,[navLatLng.lat,navLatLng.lng],false,!TR))[0];
@@ -2891,6 +2893,7 @@ async function optimizeVias(){
 }
 // ---------- rail: hurry / missed connection / replanning ----------
 function trWalkWatch(){
+  if(movingFast()){trFastReplan();return;}
   const leg=TR.j.legs[TR.li],now=Date.now();
   if(now-(TR.rf||0)>60000){TR.rf=now;trRefresh(leg);}
   if(leg.cancelled&&!TR.missed){trAlarm('conn_cancel',leg);return;}
@@ -4826,7 +4829,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=31,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=32,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
@@ -5348,6 +5351,19 @@ async function onboardJourneys(to){
   L.forEach(j=>j.legs.forEach(g=>{if(!g.walking){const c=lineCol(g.name);if(c)g.color=c;}}));
   if(L.length)toast(t('ob_note',{l:L[0].legs[0].name,d:stName(L[0].legs[0].dir||'')}),5000);
   return L;
+}
+// ===== v32: on a train but still on the walking leg -> detect the train and switch =====
+let trFastT=0;
+async function trFastReplan(){
+  if(!TR||TR.phase!=='walk'||!destLatLng||Date.now()-trFastT<40000)return;trFastT=Date.now();
+  try{
+    const L=await Promise.race([onboardJourneys([destLatLng.lat,destLatLng.lng]),new Promise(z=>setTimeout(()=>z(null),12000))]);
+    if(!L||!L.length||!TR||TR.phase!=='walk'||!navigating)return;
+    const j=L[0];R.rail=L;sel.rail=0;
+    TR={j,li:0,phase:'walk',pre:false,out:false};trPrep(j);clearInterval(trTimer);trTimer=setInterval(trTick,2000);
+    hushAll();trBoard('ride');renderNav();
+    const lg=j.legs[0];speak(t('ob_found',{l:lineSay(lg),d:stName(lg.dir||lg.to.name)}),true,3);haptic([80,60,80]);
+  }catch(e){}
 }
 function arrowOf(st){const m=st.modifier||'',ty=st.type;if(ty==='waypoint')return '📍';if(ty==='roundabout'||ty==='rotary')return '🔄';if(m==='uturn')return '↩️';if(/left/.test(m))return '⬅️';if(/right/.test(m))return '➡️';return '⬆️';}
 function hapticOf(st){const m=st.modifier||'';if(m==='uturn')return [300,120,300];if(/left/.test(m))return [70,90,70];if(/right/.test(m))return [70,90,70,90,70];return [220];}

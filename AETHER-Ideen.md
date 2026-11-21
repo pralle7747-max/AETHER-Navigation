@@ -165,3 +165,8 @@ Infrastruktur
 - ✅ Fix: Beim Start im Zug öffnete sich das Fahrt-Fenster nicht (Navigation schaltete nicht um) – behoben
 - ✅ Fix: Zug-Erkennung wartet höchstens 12 s auf den VBB-Server, danach normale Planung (vorher konnte das Verbindungs-Fenster hängen bleiben)
 - ✅ Beim Start im Zug kommt die richtige Ansage („Du sitzt in der …“) statt der Fußweg-Ansage
+
+## v32 (per Auto-Update)
+- ✅ Fix: Im Zug kein „Route wird neu berechnet“-Spam mehr. Bei schneller Fahrt auf einer Fußroute rechnet die App nicht neu, sondern sucht den Zug (VBB-Live) und wechselt in die Fahrt-Begleitung
+- ✅ „Zug schaffst du nicht mehr“ greift nicht mehr, während du schon fährst
+- ✅ „Route wird neu berechnet“ höchstens alle 90 Sekunden
