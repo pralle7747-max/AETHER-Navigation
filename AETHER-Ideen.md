@@ -181,3 +181,24 @@ Infrastruktur
 
 ## v35 (per Auto-Update)
 - ✅ Im Zug/Bus zeigt der Standort-Punkt (und die Karte in der Fahrt-Ansicht) immer in Fahrtrichtung entlang der Strecke, nicht nach dem Handy-Kompass; bei „Zugfahrt erkannt“ nach der GPS-Bewegungsrichtung
+
+## v37 (per Auto-Update) – Geräte, Teilen, Bedienung
+- ✅ iPad/Tablet: Seitenleisten-Layout wie am PC, aber mit Touch, Kamera, Kompass und Mikrofon
+- ✅ 1 Navigation weiterreichen (📲 im Navi-Menü) – anderes Gerät fragt „Übernehmen?“ und startet sofort
+- ✅ 2 Handy als Fernbedienung für PC/Tablet (Zoom, Verschieben, 3D, Norden, Ziel öffnen)
+- ✅ 3 „👁 Folgen“: Karte folgt live einem anderen Gerät (dieses teilt im Navi alle 6 s)
+- ✅ 4 Akku deiner Geräte in der Geräteliste + Warnung bei ≤ 15 % (nicht auf iPhone/iPad – Safari meldet den Akku nicht)
+- ✅ 5 Zeitlich begrenztes Teilen in der Gruppe (15 Min, 1 Std, bis Ankunft, immer)
+- ❌ 6 Gast-Link ohne Konto: bräuchte eine neue öffentliche Tabelle – bewusst weggelassen (ohne Konto eingeschränkt)
+- ⚠️ 7 Verloren-Modus: Vollbild-Nachricht + Alarm + Standort teilen – nur solange die App auf dem Gerät läuft (Sperrbildschirm geht nur nativ)
+- ✅ 8 Zuhause-Modus: Kommt das Handy heim, zeigt der PC „🏠 Handy ist zu Hause · morgen losgehen …“
+- ✅ 9 Karten-Gesten (2 Finger neigen/drehen, Doppeltipp-Ziehen = Zoom) aktiv
+- ✅ 10 Navi-Leiste: wischen links = Schritte, rechts = Übersicht, runter = Beenden
+- ✅ 11 Ansage-Anzeige antippen = wiederholen, seitlich wischen = stumm
+- ✅ 12 Gespeicherte Routen: nach links wischen = löschen (mit Rückgängig), nach rechts = teilen
+- ✅ 13 Kreismenü bei langem Druck / Rechtsklick: Hierhin, Details, Zuhause, Teilen, Erinnerung
+- ✅ 14 Linkshänder-Modus (Knöpfe links), größere Knöpfe auf Tablets
+- ✅ 15 Schütteln = „Wo bin ich?“ bzw. im Zug „Nächster Halt …“
+- ✅ 16 Tastatur (PC/iPad): Leertaste, N, M, D, H, F, /, ?
+- ✅ 17 Haptik: eigene Vibrationen für Wischen, Gerät gefunden, Ankunft
+- 🔒 Ohne Konto gesperrt: Weiterreichen, Fernbedienung, Folgen, Gruppe, Geräte
