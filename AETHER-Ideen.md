@@ -215,3 +215,15 @@ Infrastruktur
 - ✅ Knöpfe: 🍽 Speisekarte (direkter Link, sonst Suche nach der aktuellen Karte), 🏷 Angebote & Prospekt (Suche nach den Angeboten dieser Woche), 🌐 Website, 📞 Anrufen
 - ✅ Tankstellen: Live-Preise E5/E10/Diesel (mit Tankerkönig-Key)
 - ⚠️ Live-Preise und Wochenangebote von Läden gibt es nicht frei abrufbar – daher Link/Suche statt Preisliste in der App
+
+## v41 (per Auto-Update)
+Für alle:
+- ✅ Geschlossen-Warnung (Ziel hat bei Ankunft zu → Warnung + „Ähnliches in der Nähe“)
+- ✅ Rückweg mit einem Tipp (Karte auf der Startseite, 6 Std.)
+- ✅ „Bin gleich da“-Nachricht 5 Min vor Ankunft
+- ✅ Parkuhr-Timer mit Erinnerung 10 Min vorher
+- ✅ Nacht-Rotlicht
+Premium (Freischalt-Code, pro Gerät, lokal geprüft):
+- ✅ Effizienz-Engine: ruhigerer Standort-Punkt im Stillstand, Wasser-Animation nur bei Nutzung, Grafik auf 2x-Auflösung, GPS grob im Stillstand (wird bei Bewegung/Berührung sofort wieder genau), seltenere Abgleiche im Hintergrund – keine Funktion abgeschaltet
+- ✅ Erfolge · Gruppen-Ziel · Treffpunkt-Abstimmung · Schöne Routen · Treppen vermeiden · Bester Bahnhofs-Ausgang · Foto-Erinnerungen · Exklusive Designs (Aurora, Gold, Ozean) · Smart-Vorschläge nach Tageszeit · Fußgänger-Ampeln lernen
+- ⚠️ Der Code wird in der App geprüft (ohne Server) – für echten Verkauf bräuchte es eine Lizenzprüfung über den Server
