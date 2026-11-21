@@ -205,3 +205,7 @@ Infrastruktur
 
 ## v38 (per Auto-Update)
 - ✅ Showcase-Modus (Beta) wie eine Apple-Store-Demo: 13 Kapitel mit animierten Titelkarten, Kameraflügen und echten Aktionen (3D-Globus, Kartenstile, Suche, Routen, Zeitplanung, 3D-Vorschau, Ansagen + Demo-Fahrt, AR, Abfahrten, Wohnungs-Karte, Geräte, Designs, Sicherheit); auf Wunsch endlos; Einstellungen werden danach wiederhergestellt und nicht synchronisiert
+
+## v39 (per Auto-Update)
+- ✅ Fix: Langes Drücken (½ s) auf die Karte öffnet das Kreismenü zuverlässig – kleines Finger-Wackeln und Kamerabewegungen brechen es nicht mehr ab
+- ✅ Fix: Zurück-Geste vom Bildschirmrand öffnet das Menü nicht mehr

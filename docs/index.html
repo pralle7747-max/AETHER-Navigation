@@ -2,7 +2,7 @@
 <html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||38;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>38&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||39;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>39&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -1968,13 +1968,18 @@ async function reverseAndPreview(ll){
   openPreview(it);
 }
 map.on('contextmenu',e=>{if(screen==='map'||screen==='preview')radialOpen(e.lngLat,e.point);});
-let lpT=null;
+let lpT=null,lpS=null;
+// long press: tolerant to small finger jitter, ignores the system back-gesture edges and camera movements
 map.on('touchstart',e=>{
-  if(e.originalEvent&&e.originalEvent.touches&&e.originalEvent.touches.length>1)return;
-  clearTimeout(lpT);
-  lpT=setTimeout(()=>{if(screen==='map'||screen==='preview'){haptic(30);radialOpen(e.lngLat,e.point);}},650);
+  const oe=e.originalEvent,tc=oe&&oe.touches&&oe.touches[0];clearTimeout(lpT);lpS=null;
+  if(!tc||oe.touches.length>1)return;
+  if(tc.clientX<30||tc.clientX>window.innerWidth-30)return;
+  lpS=[tc.clientX,tc.clientY];
+  lpT=setTimeout(()=>{lpS=null;if(screen==='map'||screen==='preview'){haptic(35);radialOpen(e.lngLat,e.point);}},480);
 });
-['touchend','touchmove','dragstart','zoomstart'].forEach(ev=>map.on(ev,()=>clearTimeout(lpT)));
+map.on('touchmove',e=>{const oe=e.originalEvent,tc=oe&&oe.touches&&oe.touches[0];if(!lpS||!tc||oe.touches.length>1||Math.hypot(tc.clientX-lpS[0],tc.clientY-lpS[1])>14){clearTimeout(lpT);lpS=null;}});
+['touchend','touchcancel'].forEach(ev=>map.on(ev,()=>{clearTimeout(lpT);lpS=null;}));
+window.addEventListener('blur',()=>clearTimeout(lpT));document.addEventListener('visibilitychange',()=>clearTimeout(lpT));
 map.on('click',e=>{
   if(screen!=='map'&&screen!=='preview')return;
   const fs=map.queryRenderedFeatures(e.point).filter(f=>f.layer&&/poi/i.test(f.layer.id)&&f.properties&&(f.properties.name||f.properties['name:latin']));
@@ -4875,7 +4880,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=38,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=39,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
