@@ -227,3 +227,8 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - ✅ Effizienz-Engine: ruhigerer Standort-Punkt im Stillstand, Wasser-Animation nur bei Nutzung, Grafik auf 2x-Auflösung, GPS grob im Stillstand (wird bei Bewegung/Berührung sofort wieder genau), seltenere Abgleiche im Hintergrund – keine Funktion abgeschaltet
 - ✅ Erfolge · Gruppen-Ziel · Treffpunkt-Abstimmung · Schöne Routen · Treppen vermeiden · Bester Bahnhofs-Ausgang · Foto-Erinnerungen · Exklusive Designs (Aurora, Gold, Ozean) · Smart-Vorschläge nach Tageszeit · Fußgänger-Ampeln lernen
 - ⚠️ Der Code wird in der App geprüft (ohne Server) – für echten Verkauf bräuchte es eine Lizenzprüfung über den Server
+
+## v42 (per Auto-Update)
+- ✅ Mehr Routen für Auto, Rad, zu Fuß: bis zu 3 Alternativen vom Routing-Dienst + eigene Varianten über Umwege links/rechts; Doppelte und zu lange werden aussortiert; bis zu 5 Routen
+- ✅ Routen-Liste: Dauer · Länge · „über …“ · „+3 min“ · schnellste/kürzeste, antippen zum Wechseln
+- ✅ Bahn: bis zu 12 Verbindungen, Knöpfe „◂ Frühere“ / „Spätere Verbindungen ▸“
