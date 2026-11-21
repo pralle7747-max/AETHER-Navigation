@@ -253,3 +253,10 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Sparen: Kamera ~12 Bilder/s statt 60, Pixel-Ratio 1.25, 3D-Gelände aus, Karte abgedunkelt (OLED), weniger Spur-/Routen-Updates
 - Ende: 1,8 km vor Abbiegung, langsamer als 40 km/h, Gefahr voraus, Antippen (60 s) oder Chip (10 min Pause)
 - Tipp-Hinweis: Bildschirm aus, Ansagen laufen weiter; Statistik „min im Sparmodus“
+
+
+## v46 – Qualität & echte App
+- Fehler-Melder: Fehler werden automatisch gespeichert (ohne Standort), Einstellungen → Fehler melden → teilen/kopieren; einmaliger Hinweis nach Absturz
+- Einstellungen: Suchfeld (findet Seiten und einzelne Schalter, springt hin und markiert)
+- APK v46 (nativ): echte Bildschirm-Helligkeit (Autobahn-Sparen), Update-Download + Installer direkt in der App (REQUEST_INSTALL_PACKAGES), nativeV() für Funktions-Erkennung
+- Kein Play Store nötig: APK direkt installieren, künftige Updates kommen automatisch (Web) bzw. per Knopf (APK)
