@@ -149,3 +149,9 @@ Infrastruktur
 ## v28 (per Auto-Update)
 - ✅ Wohnungs-Karte am Handy: „In welchem Raum bist du?“ → „Wohin?“ (Geräte, Gegenstände, Räume) → Weg führt durch die eingezeichneten Türen, mit Pfeil, Entfernung und Ansage
 - ✅ Grundriss wird beim Öffnen sofort und danach alle 10 s synchronisiert (Änderungen vom PC erscheinen direkt am Handy)
+
+## v29 (per Auto-Update)
+- ✅ AR: Straßen-/Wegerkennung im Kamerabild (Bildanalyse ab dem Boden vor den Füßen), Weg leuchtet auf – am stärksten entlang der Route; abschaltbar
+- ✅ AR: Linie bleibt beim Neigen/Kippen stabil (volle 3D-Lage des Handys, geglättet, kein Springen bei senkrechter Haltung)
+- ✅ Fix: Ebenen-Menü am Handy passt auf den Bildschirm und ist scrollbar
+- ✅ Fix: „Regenradar“ und „Live-Fahrzeuge“ hatten denselben Text
