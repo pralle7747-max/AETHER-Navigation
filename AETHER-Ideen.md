@@ -178,3 +178,6 @@ Infrastruktur
 ## v34 (per Auto-Update)
 - ✅ Geplanter Zug hat Vorrang: Fährst du schnell und der Zug aus deiner Route fährt laut Fahrplan gerade (±2–3 Min), sitzt du in diesem Zug – auch wenn das GPS bis 2,5 km neben der Linie liegt oder die Verbindung keine genaue Streckenlinie hat
 - ✅ Live-Suche (VBB) nur noch, wenn gerade kein geplanter Zug fährt; dabei wird die geplante Linie bevorzugt
+
+## v35 (per Auto-Update)
+- ✅ Im Zug/Bus zeigt der Standort-Punkt (und die Karte in der Fahrt-Ansicht) immer in Fahrtrichtung entlang der Strecke, nicht nach dem Handy-Kompass; bei „Zugfahrt erkannt“ nach der GPS-Bewegungsrichtung
