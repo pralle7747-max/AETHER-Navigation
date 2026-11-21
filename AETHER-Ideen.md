@@ -238,3 +238,11 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Ultra-Sparmodus (Premium): dunkel, kein 3D/Gelände/Himmel, gedrosselte Puck-Animation, Pixel-Ratio 1.5, Sync alle 5 min, AR-Straße aus; automatisch unter 20 % Akku; beim Ausschalten wird alles wiederhergestellt
 - Verkehr: Verkehrsfluss-Ebene, Unfall-/Baustellen-/Sperrungsmeldungen (TomTom, kostenloser Key)
 - Route: Stau-Färbung, „Stau auf der Route: +N min“ / „Freie Fahrt“, Stau-Check alle 3 min in der Navigation mit Ansage ab 5 min
+
+
+## v44 – Routen-Panel
+- Panel per Griff/Wischen in 3 Stufen (klein/mittel/fast Vollbild), kompaktere Verbindungs-Karten
+- ⟳ Aktualisieren (Route bzw. Abfahrten neu laden, Auswahl bleibt), Zeitstempel „aktualisiert HH:MM“
+- Abfahrten: „Abfahrt in N min“ zählt live, alle 2 min automatisch neu (nicht im Ultra-Modus)
+- Zug: erste Verbindung sofort auf der Karte als Vorschau
+- Fix: Wechsel Zug → Auto zeigt immer das richtige Panel; Kartenausschnitt passt auch bei großem Panel
