@@ -155,3 +155,8 @@ Infrastruktur
 - ✅ AR: Linie bleibt beim Neigen/Kippen stabil (volle 3D-Lage des Handys, geglättet, kein Springen bei senkrechter Haltung)
 - ✅ Fix: Ebenen-Menü am Handy passt auf den Bildschirm und ist scrollbar
 - ✅ Fix: „Regenradar“ und „Live-Fahrzeuge“ hatten denselben Text
+
+## v30 (per Auto-Update)
+- ✅ Start in der Fahrt: Bewegst du dich schnell, sucht die App deinen Zug im VBB-Live-Radar (Position + Fahrtrichtung), plant ab dem nächsten Halt bzw. „sitzen bleiben bis …“ und startet direkt die Fahrt-Begleitung
+- ✅ Bessere Einstiegs-/Bahnhofserkennung: Durchschnittstempo statt Momentanwert, Abstand zur Strecke passt sich der GPS-Genauigkeit an
+- ⚠️ Erkennung des Zugs per Live-Radar nur im VBB-Gebiet (Berlin/Brandenburg); außerhalb sagt die App „Ich erkenne gleich deinen Zug“ statt „Laufe zum Bahnhof“
