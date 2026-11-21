@@ -202,3 +202,6 @@ Infrastruktur
 - ✅ 16 Tastatur (PC/iPad): Leertaste, N, M, D, H, F, /, ?
 - ✅ 17 Haptik: eigene Vibrationen für Wischen, Gerät gefunden, Ankunft
 - 🔒 Ohne Konto gesperrt: Weiterreichen, Fernbedienung, Folgen, Gruppe, Geräte
+
+## v38 (per Auto-Update)
+- ✅ Showcase-Modus (Beta) wie eine Apple-Store-Demo: 13 Kapitel mit animierten Titelkarten, Kameraflügen und echten Aktionen (3D-Globus, Kartenstile, Suche, Routen, Zeitplanung, 3D-Vorschau, Ansagen + Demo-Fahrt, AR, Abfahrten, Wohnungs-Karte, Geräte, Designs, Sicherheit); auf Wunsch endlos; Einstellungen werden danach wiederhergestellt und nicht synchronisiert
