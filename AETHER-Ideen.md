@@ -275,3 +275,12 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Ansagen, die gleichzeitig anstehen (140-ms-Sammelfenster + Warteschlange), werden zu einem Satz verbunden → eine Absenkung, keine Lücke
 - Musik-Absenkung bleibt 1,2 s nach einer Ansage bestehen (vorher 0,35 s) → kein „Pumpen“
 - Stilles Aufwärmen der Sprachausgabe beim Navigationsstart; Browser/PC nutzen onend
+
+
+## v49 – Unterirdisch navigieren
+- Zu Fuß / Fußweg zum Zug: nach 8 s ohne gutes GPS (≤30 m) übernimmt die Schritt-Navigation: Schritte (Bewegungssensor) × Schrittlänge entlang der Route
+- Ungenaue Indoor-Fixes werden ignoriert, keine Neuberechnung; gutes GPS übernimmt sofort wieder („GPS ist wieder da“)
+- Puck grau + Chip „👣 Schritt-Navigation · N“; Ansage einmal pro Fahrt
+- Umsteigen: Bahnsteig-Ebenen aus OSM (level/layer) → „Der Anschluss fährt 2 Ebenen tiefer. Mit Aufzug.“
+- Zug im Tunnel: Fahrplan + Bewegungssensor (gab es schon)
+- Schalter in Einstellungen → Karte

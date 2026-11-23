@@ -1,8 +1,8 @@
 {
- "web": 48,
+ "web": 49,
  "apk": 48,
  "exe": 26,
  "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v48.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v48: Flüssigere Ansagen – warten auf das echte Ende statt zu schätzen, kurz hintereinander kommende Ansagen werden ein Satz, Musik pumpt nicht mehr zwischen den Ansagen, Sprachausgabe startet ohne Verzögerung"
+ "notes": "v49: Unterirdisch navigieren – fällt das GPS aus (U-Bahn, Tunnel, Bahnhof), zählt die App deine Schritte und führt dich entlang der Route weiter; Ebenen-Hinweis beim Umsteigen"
 }
