@@ -260,3 +260,11 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Einstellungen: Suchfeld (findet Seiten und einzelne Schalter, springt hin und markiert)
 - APK v46 (nativ): echte Bildschirm-Helligkeit (Autobahn-Sparen), Update-Download + Installer direkt in der App (REQUEST_INSTALL_PACKAGES), nativeV() für Funktions-Erkennung
 - Kein Play Store nötig: APK direkt installieren, künftige Updates kommen automatisch (Web) bzw. per Knopf (APK)
+
+
+## v47 – Bahnhof als Zone (Idee vom Nutzer)
+- Bahnhofsgebäude, Bahnhofsfläche und Bahnsteige (OSM) werden als Zone geladen und 30 Tage gespeichert; Ersatz: 110-m-Kreis
+- Im Fußweg zum Zug: 2 GPS-Treffer in der Zone (Toleranz je nach Genauigkeit) → „Im Bahnhof erkannt“, Gleis-Ansage, Wechsel in Warte-/Fahrmodus
+- Keine Neuberechnung, solange man in der Zone ist (GPS drinnen ungenau)
+- Zone wird während des Fußwegs blau gestrichelt angezeigt; Schalter in Einstellungen → Karte
+- Fix (Fehlerbericht): fitBounds-Absturz bei kleiner Karte (Tastatur offen) / negativem Rand / Punkt-Route

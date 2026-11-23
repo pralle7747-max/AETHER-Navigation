@@ -1,8 +1,8 @@
 {
- "web": 46,
+ "web": 47,
  "apk": 46,
  "exe": 26,
  "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v46.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v46: Fehler-Melder (Einstellungen → Fehler melden), Suche in den Einstellungen, neue APK mit echter Bildschirm-Helligkeit beim Autobahn-Sparen und Updates direkt in der App installieren"
+ "notes": "v47: Bahnhof als Ankunfts-Zone (ganzes Gebäude + Gleise zählen als angekommen, keine Neuberechnung im Bahnhof) + Fix Karten-Absturz beim Routen-Zoom"
 }
