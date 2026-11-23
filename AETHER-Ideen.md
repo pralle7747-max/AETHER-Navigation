@@ -268,3 +268,10 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Keine Neuberechnung, solange man in der Zone ist (GPS drinnen ungenau)
 - Zone wird während des Fußwegs blau gestrichelt angezeigt; Schalter in Einstellungen → Karte
 - Fix (Fehlerbericht): fitBounds-Absturz bei kleiner Karte (Tastatur offen) / negativem Rand / Punkt-Route
+
+
+## v48 – Flüssigere Ansagen (Idee vom Nutzer)
+- Native TTS meldet das echte Ende (onDone → aetherTtsDone) → nächste Ansage nach 0,23 s statt geschätzter Dauer + 0,65 s
+- Ansagen, die gleichzeitig anstehen (140-ms-Sammelfenster + Warteschlange), werden zu einem Satz verbunden → eine Absenkung, keine Lücke
+- Musik-Absenkung bleibt 1,2 s nach einer Ansage bestehen (vorher 0,35 s) → kein „Pumpen“
+- Stilles Aufwärmen der Sprachausgabe beim Navigationsstart; Browser/PC nutzen onend

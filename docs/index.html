@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script>(function(){var K="aether_errlog",IGN=/Failed to fetch|NetworkError|AbortError|aborted|Load failed|ResizeObserver loop|The user aborted|timeout/i;function add(m,st,hard){try{m=String(m||"").slice(0,300);if(!m||IGN.test(m))return;var l=JSON.parse(localStorage.getItem(K)||"[]"),z=l[l.length-1];if(z&&z.m===m){z.n=(z.n||1)+1;z.t=Date.now();}else l.push({t:Date.now(),v:window.AETHER_LIVE_ON||window.AETHER_BUILT_V,m:m,s:String(st||"").slice(0,700),sc:window.AETHER_SCR||""});if(l.length>40)l=l.slice(-40);localStorage.setItem(K,JSON.stringify(l));if(hard)window.AETHER_ERRHARD=(window.AETHER_ERRHARD||0)+1;}catch(e){}}window.aetherErr=add;addEventListener("error",function(e){if(e&&e.message)add(e.message,(e.error&&e.error.stack)||(String(e.filename||"").split("/").pop()+":"+e.lineno+":"+e.colno),1);},true);addEventListener("unhandledrejection",function(e){var r=e&&e.reason;add("Promise: "+((r&&r.message)||r),r&&r.stack,0);});var w=console.warn;console.warn=function(a,b){try{if(a==="draw"||a==="panel")add("warn "+a+": "+(b&&b.message),b&&b.stack,0);}catch(x){}return w.apply(console,arguments);};})();</script>
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||47;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>47&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||48;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>48&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -1195,7 +1195,23 @@ function pickWebVoice(){
 }
 const NAT=()=>window.AetherNative;
 function ttsConfigure(){try{if(NAT())NAT().configure(S.engine||'',LANGS[S.lang].tts,S.voice||'');}catch(e){}}
-const SQ=[];let sqBusy=0,sqTimer=null,navEpoch=0;const lastSaid={};
+const SQ=[];let sqBusy=0,sqTimer=null,navEpoch=0,ttsCb=false,sqWait=false;const lastSaid={};
+// v48: the engine tells us when it really finished → next announcement follows after a short natural pause
+window.aetherTtsDone=()=>{if(!sqWait)return;sqWait=false;sqBusy=Date.now()+230;clearTimeout(sqTimer);sqTimer=setTimeout(pumpSpeech,250);};
+setTimeout(()=>{try{if(NAT()&&NAT().ttsHook){NAT().ttsHook();ttsCb=true;}}catch(e){}},300);
+// merge what is already waiting into one fluent sentence (one ducking, no gap)
+function sqMerge(it){
+  if(it.force)return it;
+  let txt=String(it.text);const now=Date.now();
+  while(SQ.length){const n=SQ[0];
+    if(n.epoch!==navEpoch||n.exp<now){SQ.shift();continue;}
+    if(n.force||(it.man&&n.man)||(txt.length+String(n.text).length)>175||Math.abs((n.prio||2)-(it.prio||2))>1)break;
+    SQ.shift();lastSaid[n.text]=now;
+    txt=txt.replace(/\s*[.!?…]?\s*$/,'')+'. '+String(n.text);
+    if(n.man){it.man=true;it.arrow=n.arrow;}it.prio=Math.max(it.prio,n.prio);
+  }
+  it.text=txt;return it;
+}
 function estDur(x){return prep(x).length/(13.5*(S.rate||1))*1000+450;}
 function nextMajorIdx(i){while(i<steps.length&&isMinor(steps[i]))i++;return i<steps.length?i:-1;}
 function isMinor(st){return !!st&&(st.type==='new name'||st.type==='notification'||(st.type==='continue'&&(!st.modifier||st.modifier==='straight')));}
@@ -1215,23 +1231,27 @@ function speak(text,force,prio,man,arrow){
   if(man)for(let i=SQ.length-1;i>=0;i--)if(SQ[i].man)SQ.splice(i,1);
   SQ.push({text,force,prio,man,arrow,epoch:navEpoch,exp:now+(prio>=3?15000:prio===2?8000:4000)});
   SQ.sort((a,b)=>b.prio-a.prio);
-  pumpSpeech();
+  if(force||now<sqBusy||sqWait)pumpSpeech();else{clearTimeout(sqTimer);sqTimer=setTimeout(pumpSpeech,140);}
 }
 function pumpSpeech(){
   clearTimeout(sqTimer);
   const now=Date.now();
   if(now<sqBusy){sqTimer=setTimeout(pumpSpeech,sqBusy-now+20);return;}
+  if(sqWait&&now<sqBusy)return;
   let it;
   while((it=SQ.shift())&&(it.epoch!==navEpoch||it.exp<now));
   if(!it)return;
   if(it.prio===2&&!it.force&&inManeuverZone()&&SQ.some(x=>x.prio>=3)){SQ.push(it);SQ.sort((a,b)=>b.prio-a.prio);it=SQ.shift();}
+  it=sqMerge(it);
   lastSaid[it.text]=now;if(it.prio>=2)window.AETHER_LASTANN=it.text;
-  sayNow(it.text,it.force,it.arrow);
-  sqBusy=now+estDur(it.text)+(muted&&!it.force?0:650);
+  const cb=sayNow(it.text,it.force,it.arrow);
+  // with a real "done" signal we wait for it (safety timeout); otherwise fall back to the estimate
+  if(cb){sqWait=true;sqBusy=now+estDur(it.text)*2+2500;}
+  else{sqWait=false;sqBusy=now+estDur(it.text)+(muted&&!it.force?0:450);}
   sqTimer=setTimeout(pumpSpeech,sqBusy-now+20);
 }
 function hushAll(){
-  navEpoch++;SQ.length=0;sqBusy=0;clearTimeout(sqTimer);
+  navEpoch++;SQ.length=0;sqBusy=0;sqWait=false;clearTimeout(sqTimer);
   try{if(NAT())NAT().stop();}catch(e){}
   try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}
   $('toast').classList.add('hidden');
@@ -1239,18 +1259,20 @@ function hushAll(){
 function sayNow(text,force,arrow){
   if(!muted&&!askOpen)toast(text,Math.max(3500,String(text).length*65));
   if(navigating&&S.watch&&!force)watchNotify((arrow?arrow+' ':'')+text);
-  if(muted&&!force)return;
+  if(muted&&!force)return false;
   const out=prep(text);
   try{if(NAT()&&NAT().setPan){let pn=0;if(S.pan3d!==false&&arrow&&headphonesOn()){if(/⬅|↰/.test(arrow))pn=-0.75;else if(/➡|↱/.test(arrow))pn=0.75;}NAT().setPan(pn);}}catch(e){}
   try{
-    if(NAT()&&NAT().ready()){NAT().speak(out,S.rate,1.02,muted?0:S.vol);return;}
+    if(NAT()&&NAT().ready()){NAT().speak(out,S.rate,1.02,muted?0:S.vol);return ttsCb;}
   }catch(e){}
-  if(!('speechSynthesis' in window))return;
+  if(!('speechSynthesis' in window))return false;
   const u=new SpeechSynthesisUtterance(out);
   u.lang=LANGS[S.lang].tts;
   const v=pickWebVoice();if(v)u.voice=v;
   u.rate=S.rate;u.pitch=1.02;u.volume=muted?0:S.vol;
+  u.onend=u.onerror=()=>window.aetherTtsDone();
   speechSynthesis.speak(u);
+  return true;
 }
 function setMuteUI(){
   document.querySelectorAll('.mutebtn').forEach(x=>x.textContent=muted?'🔇':'🔊');
@@ -2885,6 +2907,7 @@ function tick(){
 
 function startNav(silent,withSummary){
   if(!steps.length)return;
+  try{if(NAT()&&NAT().ready())NAT().speak(',',S.rate,1,0);}catch(e){}
   navigating=true;follow=true;stepIdx=0;sf={};df={};hist=[];hdgHist=[];offCount=0;hazards=[];limitVal=null;lastLimitAnn=null;
   $('limit').classList.add('hidden');
   clearCams();swStart();
@@ -4914,7 +4937,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=47,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=48,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){

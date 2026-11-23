@@ -1,8 +1,8 @@
 {
- "web": 47,
- "apk": 46,
+ "web": 48,
+ "apk": 48,
  "exe": 26,
- "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v46.apk",
+ "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v48.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v47: Bahnhof als Ankunfts-Zone (ganzes Gebäude + Gleise zählen als angekommen, keine Neuberechnung im Bahnhof) + Fix Karten-Absturz beim Routen-Zoom"
+ "notes": "v48: Flüssigere Ansagen – warten auf das echte Ende statt zu schätzen, kurz hintereinander kommende Ansagen werden ein Satz, Musik pumpt nicht mehr zwischen den Ansagen, Sprachausgabe startet ohne Verzögerung"
 }
