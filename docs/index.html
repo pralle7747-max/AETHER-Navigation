@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script>(function(){var K="aether_errlog",IGN=/Failed to fetch|NetworkError|AbortError|aborted|Load failed|ResizeObserver loop|The user aborted|timeout/i;function add(m,st,hard){try{m=String(m||"").slice(0,300);if(!m||IGN.test(m))return;var l=JSON.parse(localStorage.getItem(K)||"[]"),z=l[l.length-1];if(z&&z.m===m){z.n=(z.n||1)+1;z.t=Date.now();}else l.push({t:Date.now(),v:window.AETHER_LIVE_ON||window.AETHER_BUILT_V,m:m,s:String(st||"").slice(0,700),sc:window.AETHER_SCR||""});if(l.length>40)l=l.slice(-40);localStorage.setItem(K,JSON.stringify(l));if(hard)window.AETHER_ERRHARD=(window.AETHER_ERRHARD||0)+1;}catch(e){}}window.aetherErr=add;addEventListener("error",function(e){if(e&&e.message)add(e.message,(e.error&&e.error.stack)||(String(e.filename||"").split("/").pop()+":"+e.lineno+":"+e.colno),1);},true);addEventListener("unhandledrejection",function(e){var r=e&&e.reason;add("Promise: "+((r&&r.message)||r),r&&r.stack,0);});var w=console.warn;console.warn=function(a,b){try{if(a==="draw"||a==="panel")add("warn "+a+": "+(b&&b.message),b&&b.stack,0);}catch(x){}return w.apply(console,arguments);};})();</script>
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||49;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>49&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||50;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>50&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -2162,10 +2162,13 @@ async function osrm(m,from,to,alt,useVia){
   }
   const srv=m==='car'?'routed-car':m==='bike'?'routed-bike':'routed-foot',prof=m==='car'?'driving':m==='bike'?'bike':'foot';
   const url='https://routing.openstreetmap.de/'+srv+'/route/v1/'+prof+'/'+from[1]+','+from[0]+';'+to[1]+','+to[0]+'?overview=full&geometries=geojson&steps=true&alternatives='+(alt?'3':'false');
-  const d=await (await fetch(url)).json();
+  const rs=await fetch(url,(window.AbortSignal&&AbortSignal.timeout)?{signal:AbortSignal.timeout(12000)}:{});
+  if(!rs.ok)throw new Error('OSRM HTTP '+rs.status);
+  const d=await rs.json();
   if(d.code!=='Ok'||!d.routes.length)throw new Error('route');
   let out=d.routes.map(mkRoute);
-  if(alt&&out.length<4)out=await moreRoutes(out,srv,prof,from,to);
+  // extra variants only for the car and only when OSRM itself found few – keeps the request count low
+  if(alt&&out.length<3&&srv==='routed-car'&&!rtThrottled())out=await moreRoutes(out,srv,prof,from,to);
   return out;
 }
 
@@ -2542,6 +2545,14 @@ function drawNavLine(){
   store.main=fc([lineF(routeCoords)]);setSrc('main','main');
   store.passed=EMPTY;setSrc('passed','passed');
 }
+function straightRoute(a,b){const d=hav(a,b);return {coords:[a.slice(0,2),b.slice(0,2)],distance:d,duration:d/1.3,raw:[{maneuver:{type:'depart',location:[a[1],a[0]]},name:'',distance:d,duration:d/1.3},{maneuver:{type:'arrive',location:[b[1],b[0]]},name:'',distance:0,duration:0}]};}
+async function walkRoute(a,b){
+  if(!a||!b||![a[0],a[1],b[0],b[1]].every(isFinite))throw new Error('walk: Start/Ziel fehlt');
+  const tmo=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
+  try{const l=await tmo(osrm('foot',a,b,false),12000);if(l&&l[0])return l[0];}catch(e){window.aetherErr&&aetherErr('walkRoute 1: '+(e&&e.message),e&&e.stack,0);}
+  try{const d=await tmo(fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+a[1]+','+a[0]+';'+b[1]+','+b[0]+'?overview=full&geometries=geojson&steps=true').then(r=>r.json()),12000);if(d&&d.code==='Ok'&&d.routes&&d.routes[0])return mkRoute(d.routes[0]);}catch(e){window.aetherErr&&aetherErr('walkRoute 2: '+(e&&e.message),e&&e.stack,0);}
+  return straightRoute(a,b);
+}
 async function beginNav(){
   try{
     let r,ll=destLatLng,nm=destName;
@@ -2558,17 +2569,18 @@ async function beginNav(){
         if(j.onboard||movingFast()){railInfo=null;TR.fast=true;}
       }
       if(j.onboard&&TR){const lg=TR.j.legs[TR.li];try{r=(await osrm('foot',pos,lg.to.ll,false))[0];}catch(e){r={coords:[pos,lg.to.ll],distance:hav(pos,lg.to.ll),duration:60,raw:[{maneuver:{type:'depart',location:[pos[1],pos[0]]},name:'',distance:0,duration:0},{maneuver:{type:'arrive',location:[lg.to.ll[1],lg.to.ll[0]]},name:'',distance:0,duration:0}]};}}
-      else r=(await osrm('foot',pos,[ll.lat,ll.lng],false))[0];
+      else r=await walkRoute(pos,[ll.lat,ll.lng]);
     }else{
       if(!R[mode]||!R[mode].length)R[mode]=await osrm(mode,pos,[destLatLng.lat,destLatLng.lng],true,true);
       r=R[mode][Math.min(sel[mode],R[mode].length-1)];
     }
     applyNavRoute(r,ll,nm);
-    drawNavLine();
-    startNav(true,!(mode==='rail'&&TR&&(TR.j.onboard||TR.fast)));
+    try{drawNavLine();}catch(e){window.aetherErr&&aetherErr('drawNavLine: '+e.message,e.stack,0);}
+    try{startNav(true,!(mode==='rail'&&TR&&(TR.j.onboard||TR.fast)));}
+    catch(e){window.aetherErr&&aetherErr('startNav: '+e.message,e.stack,1);if(!navigating)throw e;try{show('nav');renderNav();}catch(x){}}
     if(mode==='rail'&&TR&&TR.j.onboard){trBoard('ride');const lg=TR.j.legs[TR.li];speak(t('ob_found',{l:lineSay(lg),d:stName(lg.dir||lg.to.name)}),true,3);}
     else if(mode==='rail'&&TR&&TR.fast)speak(t('ob_detect'),true,3);
-  }catch(e){toast(t('start_fail'));}
+  }catch(e){window.aetherErr&&aetherErr('beginNav('+mode+'): '+(e&&e.message),e&&e.stack,1);toast(t('start_fail')+(e&&e.message?' ('+String(e.message).slice(0,60)+')':''),5000);}
 }
 
 function nearestIdx(p){
@@ -4938,7 +4950,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=49,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=50,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
@@ -5977,7 +5989,7 @@ function rOverlap(a,b){const sa=rSample(a.coords);if(!sa.length)return 1;let hit
 async function moreRoutes(out,srv,prof,from,to){
   const D=hav(from,to);if(D<600||D>400000)return out;
   const mid=[(from[0]+to[0])/2,(from[1]+to[1])/2],br=bearing(from,to),best=Math.min(...out.map(r=>r.duration));
-  const offs=[0.18,-0.18,0.32,-0.32].map(k=>offPt(mid,normA(br+90),D*k));
+  const offs=[0.2,-0.2].map(k=>offPt(mid,normA(br+90),D*k));
   const res=await Promise.all(offs.map(v=>fetch('https://routing.openstreetmap.de/'+srv+'/route/v1/'+prof+'/'+from[1]+','+from[0]+';'+v[1]+','+v[0]+';'+to[1]+','+to[0]+'?overview=full&geometries=geojson&steps=true&continue_straight=false').then(r=>r.json()).catch(()=>null)));
   res.forEach(d=>{if(!d||d.code!=='Ok'||!d.routes||!d.routes[0])return;const r=mkRoute(d.routes[0]);
     // drop the "arrive at via point" step so it navigates like a normal route
@@ -6338,6 +6350,36 @@ function lvlOf(leg,plat){if(!leg||!leg.plats||!plat)return null;const p=leg.plat
   annOn('xfer')&&trSay(t('ug_lvl',{x})+(lift?' '+t('ug_lift'):''));
 }catch(e){}};}
 {const _rs2=renderSettings;renderSettings=function(){_rs2();try{const di=$('set-display');if(di&&!di.querySelector('.ugrow')){toggleRow(di,t('ug_set'),()=>S.underground!==false,x=>{S.underground=x;});di.lastChild.classList.add('ugrow');di.appendChild(el('div','text-xs t2 px-1 pb-2',esc(t('ug_info'))));}}catch(e){}};}
+// ===== v50: second routing service (Valhalla) when OSRM fails or throttles =====
+let rtFail=0,rtFailT=0;
+function rtThrottled(){return rtFail>=2&&Date.now()-rtFailT<10*60000;}
+async function valhallaAny(m,from,to,alt,vv){
+  vv=vv||[];
+  const costing=m==='car'?'auto':m==='bike'?'bicycle':'pedestrian';
+  const body={locations:[from,...vv.map(v=>[v.lat,v.lng]),to].map(p=>({lat:p[0],lon:p[1]})),costing,directions_options:{units:'kilometers',language:LANGS[S.lang].tts}};
+  if(alt&&!vv.length)body.alternates=2;
+  const rs=await fetch('https://valhalla1.openstreetmap.de/route?json='+encodeURIComponent(JSON.stringify(body)),(window.AbortSignal&&AbortSignal.timeout)?{signal:AbortSignal.timeout(15000)}:{});
+  if(!rs.ok)throw new Error('Valhalla HTTP '+rs.status);
+  const d=await rs.json();if(!d.trip||!d.trip.legs)throw new Error('route');
+  const parse=trip=>{const coords=[],raw=[],n=trip.legs.length;
+    trip.legs.forEach((lg,li)=>{const sh=decodePoly(lg.shape,6);coords.push(...sh);
+      lg.maneuvers.forEach(mn=>{const v=VT[mn.type]||['continue','straight'];let ty=v[0];if(ty==='depart'&&li>0)return;if(ty==='arrive'&&li<n-1)ty='waypoint';
+        const p=sh[Math.min(mn.begin_shape_index||0,sh.length-1)];
+        raw.push({name:ty==='waypoint'?((vv[li]&&vv[li].title)||''):((mn.street_names||[])[0]||''),distance:(mn.length||0)*1000,duration:mn.time||0,maneuver:{type:ty,modifier:v[1],location:[p[1],p[0]],exit:mn.roundabout_exit_count,bearing_after:mn.bearing_after},intersections:[]});});});
+    return {coords,distance:trip.summary.length*1000,duration:trip.summary.time,raw,src:'valhalla'};};
+  return [parse(d.trip)].concat((d.alternates||[]).map(a=>a&&a.trip?parse(a.trip):null).filter(Boolean));
+}
+{const _o=osrm;osrm=async function(m,from,to,alt,useVia){
+  const vv=useVia&&!TR&&mode!=='rail'?vias:[];
+  // after repeated failures go straight to the backup for 10 min
+  if(rtThrottled()){try{return await valhallaAny(m,from,to,alt,vv);}catch(e){}}
+  try{const r=await _o.apply(this,arguments);if(r&&r.length){rtFail=0;return r;}throw new Error('leer');}
+  catch(e){rtFail++;rtFailT=Date.now();window.aetherErr&&aetherErr('Routing '+m+': '+(e&&e.message),'',0);
+    try{return await valhallaAny(m,from,to,alt,vv);}
+    catch(e2){window.aetherErr&&aetherErr('Routing-Ersatz '+m+': '+(e2&&e2.message),'',0);
+      if(m==='foot'){try{const d=await (await fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+from[1]+','+from[0]+';'+to[1]+','+to[0]+'?overview=full&geometries=geojson&steps=true')).json();if(d.code==='Ok'&&d.routes.length)return d.routes.map(mkRoute);}catch(x){}}
+      throw e;}}
+};}
 function arrowOf(st){const m=st.modifier||'',ty=st.type;if(ty==='waypoint')return '📍';if(ty==='roundabout'||ty==='rotary')return '🔄';if(m==='uturn')return '↩️';if(/left/.test(m))return '⬅️';if(/right/.test(m))return '➡️';return '⬆️';}
 function hapticOf(st){const m=st.modifier||'';if(m==='uturn')return [300,120,300];if(/left/.test(m))return [70,90,70];if(/right/.test(m))return [70,90,70,90,70];return [220];}
 // ---------- start-up ----------
@@ -6616,7 +6658,7 @@ function trBoard(ph){
 }
 async function trWalkTo(ll,name,info){
   try{
-    const r=(await osrm('foot',pos,ll,false))[0];
+    const r=await walkRoute(pos,ll);
     if(!TR||!navigating)return;
     railInfo=info;applyNavRoute(r,{lat:ll[0],lng:ll[1]},name);drawNavLine();trResetBanner();renderNav();
   }catch(e){toast(t('route_fail'));}

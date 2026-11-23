@@ -284,3 +284,10 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Umsteigen: Bahnsteig-Ebenen aus OSM (level/layer) → „Der Anschluss fährt 2 Ebenen tiefer. Mit Aufzug.“
 - Zug im Tunnel: Fahrplan + Bewegungssensor (gab es schon)
 - Schalter in Einstellungen → Karte
+
+
+## v50 – Fix: keine Routen / Bahn-Start „konnte nicht“
+- Ursache (vermutlich): routing.openstreetmap.de drosselt/blockiert – seit v42 bis zu 15 Anfragen pro Routensuche
+- Ersatz-Router Valhalla (Auto/Rad/Fuß, mit Alternativen); nach 2 Fehlern 10 min direkt Ersatz
+- Zusatz-Varianten nur noch fürs Auto und nur bei <3 Routen (2 statt 4 Anfragen), Timeouts 12 s
+- Bahn-Start: Fußweg Ersatzkette OSRM → OSRM direkt → Luftlinie, Start bricht nicht mehr ab; Fehler landen mit Grund im Fehlerbericht
