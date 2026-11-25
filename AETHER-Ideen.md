@@ -296,3 +296,12 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 ## v51 – Fix: „links“ obwohl rechts
 - Ursache: OSRM meldet kleine Weg-Versätze als zwei Manöver (z. B. „Am Ende der Straße links“ 6 m, dann „rechts“)
 - Fix: Manöver mit < 15 m (Fuß) / 18 m (Rad) / 25 m (Auto) bis zum nächsten werden zusammengefasst; Richtung aus Gesamt-Winkel (Peilung vorher → nachher); ergibt das geradeaus, entfällt die Anweisung ganz
+
+
+## v52 – Mikro / Zugdurchsagen verbessert
+- Fix: Stationsname zählt nur direkt nach „Nächste Station“ (nicht „weiter nach …“, Umsteige-Hinweise); Ausstiegsseite nur, wenn die Durchsage UNSERE Station betrifft
+- Plausibilität: nennt die Durchsage unser Ziel, laut Fahrplan aber noch ≥3 Stationen → Hinweis, erst bei Bestätigung (2. Durchsage) Ausstiegs-Warnung
+- Zwischenstationen aus Durchsagen → Fahrplan-Abgleich (wichtig im Tunnel) + Anzeige „noch N bis …“
+- Störung / Ersatzverkehr / Zug fällt aus → Warnung; „Zug endet hier“ → sofort neue Verbindung; „X Minuten Verspätung“ → Hinweis
+- Am Bahnsteig (6 min vor Abfahrt): Gleiswechsel für unsere Linie wird erkannt und angesagt
+- Mithören schon ab 2 Stationen vor dem Ziel, im Tunnel ohne GPS die ganze Fahrt (max. 10 min am Stück)

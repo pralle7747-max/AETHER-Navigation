@@ -1,8 +1,8 @@
 {
- "web": 51,
+ "web": 52,
  "apk": 48,
  "exe": 26,
  "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v48.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v51: Fix falsche Abbiege-Richtung – winzige Versätze im Weg („6 m links, dann rechts“) werden zu der Richtung zusammengefasst, in die man wirklich geht"
+ "notes": "v52: Zugdurchsagen (Mikro) viel genauer – erkennt welche Station wirklich gemeint ist, prüft gegen den Fahrplan, nutzt Zwischenstationen zum Abgleich, meldet Störungen, Verspätungen, „Zug endet hier“ und Gleiswechsel"
 }
