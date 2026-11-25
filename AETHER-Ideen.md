@@ -305,3 +305,12 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Störung / Ersatzverkehr / Zug fällt aus → Warnung; „Zug endet hier“ → sofort neue Verbindung; „X Minuten Verspätung“ → Hinweis
 - Am Bahnsteig (6 min vor Abfahrt): Gleiswechsel für unsere Linie wird erkannt und angesagt
 - Mithören schon ab 2 Stationen vor dem Ziel, im Tunnel ohne GPS die ganze Fahrt (max. 10 min am Stück)
+
+
+## v53 – Spotify / Musik
+- Native Medientasten (dispatchMediaKeyEvent): ⏮ ⏯ ⏭ in einer Leiste während der Navigation, Play/Pause-Status über isMusicActive – ohne Login, Spotify Free & Premium, jede Musik-App
+- Spotify-Knopf: öffnet Spotify bzw. die Fahr-Playlist (Link aus open.spotify.com → spotify:-URI, Fallback Browser)
+- Optional: Fahr-Playlist beim Navigationsstart öffnen, Musik beim Ankommen pausieren
+- Sprachbefehle: nächstes/vorheriges Lied, Pause, Musik weiter, meine Playlist
+- Leiste verschwindet im Autobahn-Sparmodus (abgedunkelt); Einstellungen → Stimme & Ansagen → Musik & Spotify
+- Später möglich: Songtitel anzeigen (bräuchte Benachrichtigungs-Zugriff) oder Spotify-Web-API mit Login (Playlists durchsuchen, nur Premium)

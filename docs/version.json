@@ -1,8 +1,8 @@
 {
- "web": 52,
- "apk": 48,
+ "web": 53,
+ "apk": 53,
  "exe": 26,
- "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v48.apk",
+ "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v53.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v52: Zugdurchsagen (Mikro) viel genauer – erkennt welche Station wirklich gemeint ist, prüft gegen den Fahrplan, nutzt Zwischenstationen zum Abgleich, meldet Störungen, Verspätungen, „Zug endet hier“ und Gleiswechsel"
+ "notes": "v53: Spotify & Musik – Musikleiste in der Navigation (vor/zurück/Pause), Fahr-Playlist per Spotify-Link, Sprachbefehle „nächstes Lied“, „Pause“, „meine Playlist“; funktioniert mit Spotify Free und Premium ohne Login"
 }
