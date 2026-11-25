@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script>(function(){var K="aether_errlog",IGN=/Failed to fetch|NetworkError|AbortError|aborted|Load failed|ResizeObserver loop|The user aborted|timeout/i;function add(m,st,hard){try{m=String(m||"").slice(0,300);if(!m||IGN.test(m))return;var l=JSON.parse(localStorage.getItem(K)||"[]"),z=l[l.length-1];if(z&&z.m===m){z.n=(z.n||1)+1;z.t=Date.now();}else l.push({t:Date.now(),v:window.AETHER_LIVE_ON||window.AETHER_BUILT_V,m:m,s:String(st||"").slice(0,700),sc:window.AETHER_SCR||""});if(l.length>40)l=l.slice(-40);localStorage.setItem(K,JSON.stringify(l));if(hard)window.AETHER_ERRHARD=(window.AETHER_ERRHARD||0)+1;}catch(e){}}window.aetherErr=add;addEventListener("error",function(e){if(e&&e.message)add(e.message,(e.error&&e.error.stack)||(String(e.filename||"").split("/").pop()+":"+e.lineno+":"+e.colno),1);},true);addEventListener("unhandledrejection",function(e){var r=e&&e.reason;add("Promise: "+((r&&r.message)||r),r&&r.stack,0);});var w=console.warn;console.warn=function(a,b){try{if(a==="draw"||a==="panel")add("warn "+a+": "+(b&&b.message),b&&b.stack,0);}catch(x){}return w.apply(console,arguments);};})();</script>
-<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||50;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>50&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
+<script>window.AETHER_BUILT_V=window.AETHER_BUILT_V||51;(function(){try{if(window.AETHER_LIVE_ON||/github\.io$/.test(location.hostname))return;var L=JSON.parse(localStorage.getItem("aether_live")||"null");if(L&&L.v>51&&L.html&&(L.fail||0)<3){L.fail=(L.fail||0)+1;localStorage.setItem("aether_live",JSON.stringify(L));window.AETHER_LIVE_ON=L.v;document.write("<plaintext hidden>");document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){document.open();document.write(L.html);document.close();},0);});}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
@@ -4950,7 +4950,7 @@ setInterval(()=>{if(acct()&&(!document.hidden||navigating))syncNow();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&acct())syncNow();});
 setTimeout(()=>{if(acct())syncNow();},2500);
 // ===== v25: auto updater =====
-const WEB_V=50,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
+const WEB_V=51,UPD_BASE='https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/';
 const IS_ELECTRON=/Electron/i.test(navigator.userAgent),IS_WEB=/github\.io$/.test(location.hostname);
 let updBusy=false;
 async function updCheck(manual){
@@ -6380,6 +6380,30 @@ async function valhallaAny(m,from,to,alt,vv){
       if(m==='foot'){try{const d=await (await fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+from[1]+','+from[0]+';'+to[1]+','+to[0]+'?overview=full&geometries=geojson&steps=true')).json();if(d.code==='Ok'&&d.routes.length)return d.routes.map(mkRoute);}catch(x){}}
       throw e;}}
 };}
+// ===== v51: merge tiny jogs ("6 m left, then right") into the turn you actually make =====
+const JOG_T=/^(turn|end of road|continue|new name|fork|merge)$/;
+function jogMod(d){const a=Math.abs(d),side=d>0?'right':'left';return a<20?'straight':a<55?'slight '+side:a<140?side:'sharp '+side;}
+function jogMerge(raw){
+  if(!raw||raw.length<4)return raw;
+  const out=raw.map(x=>Object.assign({},x,{maneuver:Object.assign({},x.maneuver)}));
+  const lim=mode==='car'?25:mode==='bike'?18:15;
+  for(let i=1;i<out.length-2;i++){
+    const a=out[i],b=out[i+1],ma=a.maneuver,mb=b.maneuver;
+    if(!ma||!mb||!JOG_T.test(ma.type||'')||!JOG_T.test(mb.type||'')||!(a.distance<lim))continue;
+    if(ma.bearing_before==null||mb.bearing_after==null)continue;
+    const d=((mb.bearing_after-ma.bearing_before+540)%360)-180,mod=jogMod(d);
+    if(mod==='straight'){
+      // left-right jog that ends up straight on: just keep walking
+      out[i-1].distance+=a.distance+b.distance;out[i-1].duration+=(a.duration||0)+(b.duration||0);out.splice(i,2);i--;continue;
+    }
+    const ty=ma.type==='end of road'?'end of road':(ma.type==='fork'||mb.type==='fork')?'fork':'turn';
+    out.splice(i,2,Object.assign({},b,{name:b.name||a.name,distance:a.distance+b.distance,duration:(a.duration||0)+(b.duration||0),
+      maneuver:Object.assign({},ma,{type:ty,modifier:mod,bearing_before:ma.bearing_before,bearing_after:mb.bearing_after})}));
+    i--;
+  }
+  return out;
+}
+{const _so=stepsOf;stepsOf=function(r){try{if(r&&r.raw&&!r._jog){r.raw=jogMerge(r.raw);r._jog=true;}}catch(e){}return _so(r);};}
 function arrowOf(st){const m=st.modifier||'',ty=st.type;if(ty==='waypoint')return '📍';if(ty==='roundabout'||ty==='rotary')return '🔄';if(m==='uturn')return '↩️';if(/left/.test(m))return '⬅️';if(/right/.test(m))return '➡️';return '⬆️';}
 function hapticOf(st){const m=st.modifier||'';if(m==='uturn')return [300,120,300];if(/left/.test(m))return [70,90,70];if(/right/.test(m))return [70,90,70,90,70];return [220];}
 // ---------- start-up ----------

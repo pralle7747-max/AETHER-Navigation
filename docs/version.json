@@ -1,8 +1,8 @@
 {
- "web": 50,
+ "web": 51,
  "apk": 48,
  "exe": 26,
  "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v48.apk",
  "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v50: Fix – Routen und Bahn-Start gehen wieder: zweiter Routen-Dienst springt ein, wenn der erste blockiert; viel weniger Anfragen; Fußweg zum Bahnhof notfalls als Luftlinie"
+ "notes": "v51: Fix falsche Abbiege-Richtung – winzige Versätze im Weg („6 m links, dann rechts“) werden zu der Richtung zusammengefasst, in die man wirklich geht"
 }

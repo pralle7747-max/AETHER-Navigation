@@ -291,3 +291,8 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Ersatz-Router Valhalla (Auto/Rad/Fuß, mit Alternativen); nach 2 Fehlern 10 min direkt Ersatz
 - Zusatz-Varianten nur noch fürs Auto und nur bei <3 Routen (2 statt 4 Anfragen), Timeouts 12 s
 - Bahn-Start: Fußweg Ersatzkette OSRM → OSRM direkt → Luftlinie, Start bricht nicht mehr ab; Fehler landen mit Grund im Fehlerbericht
+
+
+## v51 – Fix: „links“ obwohl rechts
+- Ursache: OSRM meldet kleine Weg-Versätze als zwei Manöver (z. B. „Am Ende der Straße links“ 6 m, dann „rechts“)
+- Fix: Manöver mit < 15 m (Fuß) / 18 m (Rad) / 25 m (Auto) bis zum nächsten werden zusammengefasst; Richtung aus Gesamt-Winkel (Peilung vorher → nachher); ergibt das geradeaus, entfällt die Anweisung ganz
