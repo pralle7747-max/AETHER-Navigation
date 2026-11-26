@@ -1,0 +1,37 @@
+name: AETHER Store Release
+# Legt für die neueste PC-Version (downloads/AETHER-vNN.exe) ein GitHub-Release an,
+# damit der AETHER Store die App automatisch findet und Updates anzeigt.
+on:
+  push:
+    paths:
+      - 'downloads/AETHER-v*.exe'
+      - 'downloads/AETHER-Handy-v*.apk'
+      - '.github/workflows/store-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXE=$(ls downloads/AETHER-v*.exe | sort -V | tail -1)
+          V=$(basename "$EXE" .exe | sed 's/AETHER-v//')
+          APK=$(ls downloads/AETHER-Handy-v*.apk 2>/dev/null | sort -V | tail -1 || true)
+          TAG="v$V"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG gibt es schon – APK aktualisieren"
+            [ -n "$APK" ] && gh release upload "$TAG" "$APK" --clobber
+            exit 0
+          fi
+          NOTES="AETHER Navigation für Windows (Version $V).
+
+          - Navigation für Auto, Fahrrad, zu Fuß und Bahn
+          - AETHER-Konto: Favoriten und Einstellungen auf allen Geräten synchron
+          - Handy-App (Android): $( [ -n "$APK" ] && basename "$APK" )"
+          gh release create "$TAG" "$EXE" ${APK:+"$APK"} --target "$GITHUB_SHA" \
+            --title "AETHER Navigation $V" --notes "$NOTES" --latest
