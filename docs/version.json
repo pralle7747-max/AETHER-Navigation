@@ -1,8 +1,8 @@
 {
- "web": 53,
+ "web": 54,
  "apk": 53,
  "exe": 26,
- "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v53.apk",
- "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
- "notes": "v53: Spotify & Musik – Musikleiste in der Navigation (vor/zurück/Pause), Fahr-Playlist per Spotify-Link, Sprachbefehle „nächstes Lied“, „Pause“, „meine Playlist“; funktioniert mit Spotify Free und Premium ohne Login"
+ "apkUrl": "https://raw.githubusercontent.com/pralle7747-max/AETHER-Navigation/ccr-cb7b3725-tx5sew/downloads/AETHER-Handy-v53.apk",
+ "setupUrl": "https://raw.githubusercontent.com/pralle7747-max/AETHER-Navigation/ccr-cb7b3725-tx5sew/downloads/AETHER-Setup-v26.exe",
+ "notes": "v54: App heißt im AETHER Store jetzt „AETHER Navigation“ (Update-Links angepasst)"
 }

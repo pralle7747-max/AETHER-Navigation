@@ -314,3 +314,6 @@ Premium (Freischalt-Code, pro Gerät, lokal geprüft):
 - Sprachbefehle: nächstes/vorheriges Lied, Pause, Musik weiter, meine Playlist
 - Leiste verschwindet im Autobahn-Sparmodus (abgedunkelt); Einstellungen → Stimme & Ansagen → Musik & Spotify
 - Später möglich: Songtitel anzeigen (bräuchte Benachrichtigungs-Zugriff) oder Spotify-Web-API mit Login (Playlists durchsuchen, nur Premium)
+
+## v54
+- Repo in AETHER-Navigation umbenannt, Update-Links angepasst; App im AETHER Store als „AETHER Navigation“.

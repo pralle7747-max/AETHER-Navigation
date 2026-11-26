@@ -41,7 +41,7 @@ app.whenReady().then(()=>{
 async function autoUpdate(){
   try{
     const fs=require('fs'),os=require('os'),{spawn}=require('child_process');
-    const r=await net.fetch('https://raw.githubusercontent.com/pralle7747-max/Samsung-cam-2.0/ccr-cb7b3725-tx5sew/docs/version.json?t='+Date.now(),{cache:'no-store'});
+    const r=await net.fetch('https://raw.githubusercontent.com/pralle7747-max/AETHER-Navigation/ccr-cb7b3725-tx5sew/docs/version.json?t='+Date.now(),{cache:'no-store'});
     const m=await r.json(),mine=parseInt(app.getVersion(),10)||0;
     if(!(m.exe>mine)||!m.setupUrl)return;
     const res=await net.fetch(m.setupUrl);if(!res.ok)return;
